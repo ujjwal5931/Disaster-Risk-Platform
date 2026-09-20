@@ -88,7 +88,7 @@ export default function ReportsPage() {
                   </div>
                 </div>
                 <div className="text-right text-xs text-slate-400">
-                  <div>DRIPS Platform v1.0</div>
+                  <div className="font-semibold text-slate-700">Purva Drishti Platform v1.0</div>
                   <div className="mt-1">{now}</div>
                   <div className="mt-1 bg-amber-100 text-amber-700 px-2 py-1 rounded font-bold">DEMONSTRATION ONLY</div>
                 </div>
@@ -242,7 +242,7 @@ export default function ReportsPage() {
 
             {/* Footer */}
             <div className="border-t mt-8 pt-4 text-xs text-slate-400 flex justify-between">
-              <span>DRIPS — Disaster Risk Intelligence Platform (Prototype)</span>
+              <span>Purva Drishti — Disaster Risk Intelligence Platform (Prototype)</span>
               <span>Generated: {now}</span>
             </div>
             <Disclaimer />

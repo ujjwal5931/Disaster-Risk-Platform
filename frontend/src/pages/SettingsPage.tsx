@@ -28,7 +28,7 @@ export default function SettingsPage() {
   const handleApply = () => {
     if (total !== 100) return;
     // Persist to store / localStorage for global usage across platform
-    localStorage.setItem('drips_custom_weights', JSON.stringify(w));
+    localStorage.setItem('purva_drishti_custom_weights', JSON.stringify(w));
     Object.entries(w).forEach(([key, val]) => {
       setRiskWeight(key, val / 100);
     });

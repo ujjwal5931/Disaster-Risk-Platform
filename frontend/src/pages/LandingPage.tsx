@@ -45,7 +45,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <Shield className="w-8 h-8 text-blue-400" />
             <div>
-              <div className="font-bold text-lg leading-tight">DRIPS</div>
+              <div className="font-bold text-lg leading-tight">Purva Drishti</div>
               <div className="text-xs text-slate-400">Disaster Risk Intelligence Platform</div>
             </div>
           </div>
@@ -68,7 +68,7 @@ export default function LandingPage() {
             Smart India Hackathon 2026 — Problem SIH26191
           </div>
           <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-6 text-white">
-            Disaster Risk Intelligence &<br />Safe Habitation Planning System
+            Purva Drishti — Disaster Risk Intelligence &<br />Safe Habitation Planning System
           </h1>
           <p className="text-lg text-slate-300 mb-8 max-w-3xl">
             Intelligent identification of hazard-based red zones, carrying capacity stress, and immediate relocation needs

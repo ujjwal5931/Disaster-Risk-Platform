@@ -21,7 +21,7 @@ function downloadTemplate() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'drips_habitation_template.csv';
+  a.download = 'purva_drishti_habitation_template.csv';
   a.click();
   URL.revokeObjectURL(url);
 }

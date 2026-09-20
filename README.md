@@ -1,4 +1,4 @@
-# Disaster Risk Intelligence Platform (DRIPS)
+# Purva Drishti — Disaster Risk Intelligence Platform
 ## Smart India Hackathon 2026 — Problem Statement SIH26191
 
 **Intelligent Identification of Hazard-Based Red Zones, Carrying Capacity Assessment, and Immediate Relocation Needs for Vulnerable Habitations**

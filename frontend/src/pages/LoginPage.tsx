@@ -25,7 +25,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white rounded-lg shadow-xl overflow-hidden">
         <div className="bg-slate-800 p-6 text-center text-white border-b-4 border-blue-500">
           <Shield className="w-12 h-12 mx-auto text-blue-400 mb-2" />
-          <h1 className="text-2xl font-bold tracking-tight">DRIPS</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Purva Drishti</h1>
           <p className="text-sm text-slate-300">Disaster Risk Intelligence Platform</p>
           <div className="text-xs mt-2 uppercase tracking-widest text-slate-400">Authorized Access Only</div>
         </div>

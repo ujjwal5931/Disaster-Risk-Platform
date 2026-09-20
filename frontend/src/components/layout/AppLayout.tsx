@@ -27,8 +27,8 @@ export default function AppLayout() {
     <div className="flex h-screen bg-slate-50">
       <aside className="w-60 bg-slate-900 text-white flex flex-col flex-shrink-0 overflow-y-auto">
         <div className="p-4 border-b border-slate-700 flex items-center gap-2">
-          <Shield className="w-6 h-6 text-blue-400" />
-          <div><div className="font-bold text-sm">DRIPS</div><div className="text-xs text-slate-400">Risk Platform</div></div>
+          <Shield className="w-6 h-6 text-blue-400 flex-shrink-0" />
+          <div><div className="font-bold text-sm leading-tight text-white">Purva Drishti</div><div className="text-[11px] text-slate-400">Risk Platform</div></div>
         </div>
         <nav className="flex-1 p-3 space-y-0.5">
           {NAV.map(({ to, label, icon: Icon }) => (
@@ -48,7 +48,7 @@ export default function AppLayout() {
       </aside>
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-12 bg-white border-b flex items-center justify-between px-4 flex-shrink-0">
-          <div className="text-sm text-slate-500">Disaster Risk Intelligence Platform — Demo</div>
+          <div className="text-sm font-medium text-slate-700">Purva Drishti — Disaster Risk Intelligence Platform</div>
           <div className="flex items-center gap-3">
             <button onClick={toggleDemoMode}
               className={`text-xs px-3 py-1 rounded font-medium transition-colors ${

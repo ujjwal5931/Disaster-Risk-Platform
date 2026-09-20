@@ -45,12 +45,13 @@ export default function AboutPage() {
           <Shield className="w-12 h-12 text-blue-400 flex-shrink-0 mt-1" />
           <div>
             <div className="text-xs text-blue-300 uppercase tracking-widest mb-2">Smart India Hackathon 2026 — SIH26191</div>
-            <h1 className="text-2xl font-bold mb-2">Disaster Risk Intelligence Platform</h1>
+            <h1 className="text-2xl font-bold mb-2">Purva Drishti — Disaster Risk Intelligence Platform</h1>
             <p className="text-blue-100 text-sm leading-relaxed">
               Intelligent identification of hazard-based red zones, carrying capacity assessment,
               and immediate relocation needs for vulnerable habitations.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
+              <span className="bg-blue-700 text-blue-100 text-xs px-3 py-1 rounded-full">Platform: Purva Drishti</span>
               <span className="bg-blue-700 text-blue-100 text-xs px-3 py-1 rounded-full">Category: Disaster Management</span>
               <span className="bg-blue-700 text-blue-100 text-xs px-3 py-1 rounded-full">GIS-based DSS</span>
               <span className="bg-blue-700 text-blue-100 text-xs px-3 py-1 rounded-full">Problem: SIH26191</span>

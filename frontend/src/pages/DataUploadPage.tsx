@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { PageHeader, Disclaimer } from '../components/ui';
-import { Upload, FileText, Download, CheckCircle, XCircle, Check, Database, RefreshCw, Layers, HardDrive, FileSpreadsheet } from 'lucide-react';
+import { Upload, FileText, Download, CheckCircle, XCircle, Check, Database, RefreshCw, Layers, FileSpreadsheet } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 const REQUIRED_COLS = [
@@ -437,58 +437,6 @@ export default function DataUploadPage() {
         </div>
       </div>
 
-      {/* Repository Data Files Location Guide */}
-      <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 mb-6">
-        <h3 className="font-bold text-sm text-slate-800 mb-1 flex items-center gap-2">
-          <HardDrive className="w-4 h-4 text-slate-600" />
-          Where are the Data Files Located in this Project Folder?
-        </h3>
-        <p className="text-xs text-slate-500 mb-4">
-          You can find and inspect all current habitations and disaster risk data files at these exact paths:
-        </p>
-
-        <div className="space-y-2 text-xs">
-          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <div>
-              <span className="font-bold text-slate-800">1. Full 50 Habitations Export (CSV)</span>
-              <p className="text-slate-500 font-mono text-[11px]">purva_drishti_current_50_habitations.csv</p>
-            </div>
-            <span className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">Root folder & public web root</span>
-          </div>
-
-          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <div>
-              <span className="font-bold text-slate-800">2. Frontend Dataset (TypeScript/JSON)</span>
-              <p className="text-slate-500 font-mono text-[11px]">frontend/src/data/seedData.ts</p>
-            </div>
-            <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-medium">50 Habitations, 10 Safe Zones, 10 Red Zones</span>
-          </div>
-
-          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <div>
-              <span className="font-bold text-slate-800">3. Backend Database Seed Script (Python)</span>
-              <p className="text-slate-500 font-mono text-[11px]">backend/app/data/seed.py</p>
-            </div>
-            <span className="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-medium">SQLite & PostgreSQL Database Seeder</span>
-          </div>
-
-          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <div>
-              <span className="font-bold text-slate-800">4. Local SQLite Database</span>
-              <p className="text-slate-500 font-mono text-[11px]">backend/app/data/database.db</p>
-            </div>
-            <span className="text-[11px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-medium">Pre-populated tables & scores</span>
-          </div>
-
-          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <div>
-              <span className="font-bold text-slate-800">5. Sample Ingestion Template</span>
-              <p className="text-slate-500 font-mono text-[11px]">backend/my_habitations_template.csv</p>
-            </div>
-            <span className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">CSV structure for command-line uploads</span>
-          </div>
-        </div>
-      </div>
 
       <Disclaimer />
     </div>

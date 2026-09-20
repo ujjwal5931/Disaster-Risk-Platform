@@ -1,131 +1,109 @@
-import { useState } from 'react';
-import { seedHabitations } from '../data/seedData';
+import { useState, useEffect } from 'react';
+import { Sliders, Activity } from 'lucide-react';
 import { PageHeader, RiskBadge, Disclaimer } from '../components/ui';
-import { Sliders, Zap, TrendingUp, TrendingDown } from 'lucide-react';
+import { useHabitations } from '../hooks/useHabitations';
 
-const PRESETS = [
-  { id: 'rain20', label: '20% Rainfall', params: { popChange: 0, rainMulti: 1.2, floodLevel: 0, shelterCap: 0, healthCap: 0, roadAvail: 100 } },
-  { id: 'flood', label: 'Major Flood', params: { popChange: 0, rainMulti: 2.0, floodLevel: 4, shelterCap: 0, healthCap: 0, roadAvail: 40 } },
-  { id: 'pop', label: '+50% Population', params: { popChange: 50, rainMulti: 1.0, floodLevel: 0, shelterCap: 0, healthCap: 0, roadAvail: 100 } },
-  { id: 'shelter', label: '+100% Shelter', params: { popChange: 0, rainMulti: 1.0, floodLevel: 0, shelterCap: 100, healthCap: 50, roadAvail: 100 } },
-  { id: 'worst', label: 'Worst Case', params: { popChange: 20, rainMulti: 2.0, floodLevel: 5, shelterCap: 0, healthCap: 0, roadAvail: 30 } },
+const SLIDERS = [
+  { k: 'rain', label: 'Rainfall Intensity (%)', min: 0, max: 200, step: 10, fmt: (v: number) => `+${v}%` },
+  { k: 'evac', label: 'Evacuation Rate (%)', min: 0, max: 100, step: 5, fmt: (v: number) => `${v}%` },
+  { k: 'infra', label: 'Infra Hardening (Pts)', min: 0, max: 5, step: 1, fmt: (v: number) => `+${v}` },
+  { k: 'shelterCap', label: 'Shelter Expansion (%)', min: 0, max: 200, step: 10, fmt: (v: number) => `+${v}%` },
+  { k: 'healthCap', label: 'Healthcare Surge (%)', min: 0, max: 100, step: 10, fmt: (v: number) => `+${v}%` },
 ];
 
-const DEFAULT_PARAMS = { popChange: 0, rainMulti: 1.0, floodLevel: 0, shelterCap: 0, healthCap: 0, roadAvail: 100 };
-
-function getRiskClass(score: number) {
-  if (score < 25) return 'LOW';
-  if (score < 50) return 'MODERATE';
-  if (score < 75) return 'HIGH';
-  return 'CRITICAL';
-}
-
-function Delta({ before, after, unit = '', lowerIsBetter = false }: { before: number; after: number; unit?: string; lowerIsBetter?: boolean }) {
-  const diff = after - before;
-  const worse = lowerIsBetter ? diff < 0 : diff > 0;
-  if (diff === 0) return <span className="text-slate-400">—</span>;
-  return (
-    <span className={`font-bold flex items-center gap-1 ${worse ? 'text-red-600' : 'text-green-600'}`}>
-      {worse ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-      {diff > 0 ? '+' : ''}{Math.round(diff * 10) / 10}{unit}
-    </span>
-  );
-}
-
 export default function SimulationPage() {
-  const [selId, setSelId] = useState(seedHabitations[0].id);
-  const h = seedHabitations.find(x => x.id === selId) || seedHabitations[0];
-  const [params, setParams] = useState(DEFAULT_PARAMS);
+  const { allHabitations } = useHabitations();
+  
+  const [selId, setSelId] = useState(allHabitations[0]?.id || '');
+  useEffect(() => {
+    if (!allHabitations.find(h => h.id === selId)) {
+      setSelId(allHabitations[0]?.id || '');
+    }
+  }, [allHabitations, selId]);
+
+  const h = allHabitations.find(x => x.id === selId) || allHabitations[0];
+
+  const [params, setParams] = useState({
+    rain: 0, evac: 0, infra: 0, shelterCap: 0, healthCap: 0
+  });
+
   const [result, setResult] = useState<any>(null);
 
   const set = (k: string, v: number) => setParams(p => ({ ...p, [k]: v }));
-  const applyPreset = (preset: typeof PRESETS[0]) => setParams(preset.params);
-  const reset = () => { setParams(DEFAULT_PARAMS); setResult(null); };
+  const reset = () => {
+    setParams({ rain: 0, evac: 0, infra: 0, shelterCap: 0, healthCap: 0 });
+    setResult(null);
+  };
 
   const runSim = () => {
-    const newPop = Math.round(h.population * (1 + params.popChange / 100));
-    const floodBonus = params.floodLevel * 3.2;
-    const rainBonus = (params.rainMulti - 1) * 9;
-    const roadPenalty = (1 - params.roadAvail / 100) * 12;
-    const shelterBenefit = params.shelterCap * 0.08;
-    const healthBenefit = params.healthCap * 0.04;
-    const newRisk = Math.min(100, Math.max(0,
-      h.risk_score + floodBonus + rainBonus + roadPenalty - shelterBenefit - healthBenefit
-    ));
-    const newShelter = Math.max(1, h.shelter_capacity_persons * (1 + params.shelterCap / 100));
-    const newCap = Math.min(300, Math.round((newPop * 0.25 / newShelter) * 100 + params.floodLevel * 5));
+    if (!h) return;
+    const basePop = h.population;
+    const effPop = Math.max(0, basePop * (1 - (params.evac / 100)));
+    
+    const hazMultiplier = 1 + (params.rain / 100);
+    const newHaz = Math.min(100, h.hazard_severity * hazMultiplier);
+    
+    const infraImp = params.infra;
+    const newVul = Math.max(0, h.housing_quality_index - infraImp);
+    
+    const simScore = Math.min(100, (newHaz * 0.4) + ((effPop / basePop) * 30) + (newVul * 5) + 10);
+    
+    const baseCap = h.capacity_utilization;
+    const capDenom = 1 + (params.shelterCap / 100 * 0.5) + (params.healthCap / 100 * 0.5);
+    const simCap = Math.round((baseCap * (effPop / basePop)) / capDenom);
+
+    const getR = (s: number) => s >= 80 ? 'CRITICAL' : s >= 60 ? 'HIGH' : s >= 40 ? 'MODERATE' : 'LOW';
 
     setResult({
-      before: { risk: h.risk_score, riskClass: h.risk_class, cap: h.capacity_utilization, pop: h.population },
-      after: { risk: Math.round(newRisk * 10) / 10, riskClass: getRiskClass(newRisk), cap: newCap, pop: newPop },
+      before: {
+        risk: h.risk_score,
+        riskClass: h.risk_class,
+        cap: h.capacity_utilization,
+        pop: basePop
+      },
+      after: {
+        risk: Math.round(simScore),
+        riskClass: getR(simScore),
+        cap: simCap,
+        pop: Math.round(effPop)
+      }
     });
   };
 
-  const SLIDERS = [
-    { k: 'popChange', label: 'Population Change', min: -50, max: 100, step: 5, fmt: (v: number) => `${v > 0 ? '+' : ''}${v}%` },
-    { k: 'rainMulti', label: 'Rainfall Multiplier', min: 0.5, max: 3.0, step: 0.1, fmt: (v: number) => `${v}×` },
-    { k: 'floodLevel', label: 'Flood Level', min: 0, max: 5, step: 0.5, fmt: (v: number) => `${v} m` },
-    { k: 'shelterCap', label: 'Shelter Capacity Change', min: -50, max: 200, step: 10, fmt: (v: number) => `${v > 0 ? '+' : ''}${v}%` },
-    { k: 'healthCap', label: 'Healthcare Capacity Change', min: -50, max: 200, step: 10, fmt: (v: number) => `${v > 0 ? '+' : ''}${v}%` },
-    { k: 'roadAvail', label: 'Road Availability', min: 0, max: 100, step: 5, fmt: (v: number) => `${v}%` },
-  ];
+  const Delta = ({before, after, unit = ''}: any) => {
+    const d = after - before;
+    if (d === 0) return <span className="text-slate-400">0{unit}</span>;
+    if (d > 0) return <span className="text-red-500">+{d.toLocaleString()}{unit}</span>;
+    return <span className="text-green-600">{d.toLocaleString()}{unit}</span>;
+  };
+
+  if (!h) return null;
 
   return (
     <div className="p-6">
-      <PageHeader
-        title="Scenario Simulation"
-        subtitle="What-if analysis — model changes in hazard, population, or infrastructure to assess impact on risk."
-      />
-
+      <PageHeader title="Intervention Simulation" subtitle="Scenario modeling and resource impact forecasting." />
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Controls */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-            <h3 className="font-bold mb-3 flex items-center gap-2"><Sliders className="w-4 h-4" /> Target Habitation</h3>
-            <select
-              value={selId}
-              onChange={e => { setSelId(e.target.value); setResult(null); }}
-              className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-500"
+            <h3 className="font-bold mb-3 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-600" /> Target Habitation</h3>
+            <select 
+              value={selId} 
+              onChange={e => {setSelId(e.target.value); setResult(null);}}
+              className="w-full p-2 border rounded bg-slate-50 font-medium"
             >
-              {seedHabitations.map(hab => (
-                <option key={hab.id} value={hab.id}>
-                  {hab.name} — {hab.district} ({hab.risk_class})
-                </option>
+              {allHabitations.map(x => (
+                <option key={x.id} value={x.id}>{x.name} ({x.district}) - {x.risk_class}</option>
               ))}
             </select>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-center">
-              <div className="bg-slate-50 rounded p-2">
-                <div className="font-bold text-lg">{h.risk_score}</div>
-                <div className="text-slate-500">Current Risk</div>
-              </div>
-              <div className="bg-slate-50 rounded p-2">
-                <div className="font-bold text-lg">{h.capacity_utilization}%</div>
-                <div className="text-slate-500">Capacity</div>
-              </div>
-              <div className="bg-slate-50 rounded p-2">
-                <div className="font-bold text-lg">{h.population.toLocaleString()}</div>
-                <div className="text-slate-500">Population</div>
-              </div>
+            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+              <div><span className="text-slate-500 block text-xs">Current Risk</span> <RiskBadge riskClass={h.risk_class} /> ({h.risk_score})</div>
+              <div><span className="text-slate-500 block text-xs">Population</span> {h.population.toLocaleString()}</div>
+              <div><span className="text-slate-500 block text-xs">Hazard Type</span> <span className="capitalize">{h.hazard_type}</span></div>
+              <div><span className="text-slate-500 block text-xs">Capacity Util.</span> {h.capacity_utilization}%</div>
             </div>
           </div>
 
-          {/* Presets */}
-          <div className="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
-            <h3 className="font-bold mb-3 flex items-center gap-2"><Zap className="w-4 h-4 text-yellow-500" /> Preset Scenarios</h3>
-            <div className="flex flex-wrap gap-2">
-              {PRESETS.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => applyPreset(p)}
-                  className="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-blue-100 hover:text-blue-700 border rounded transition-colors"
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Sliders */}
           <div className="bg-white p-5 rounded-lg shadow-sm border border-slate-200 space-y-4">
             <h3 className="font-bold">Parameters</h3>
             {SLIDERS.map(({ k, label, min, max, step, fmt }) => (
@@ -138,7 +116,7 @@ export default function SimulationPage() {
                   type="range" min={min} max={max} step={step}
                   value={(params as any)[k]}
                   onChange={e => set(k, +e.target.value)}
-                  className="w-full accent-blue-600"
+                  className="w-full accent-blue-600 cursor-pointer"
                 />
                 <div className="flex justify-between text-xs text-slate-400 mt-0.5">
                   <span>{fmt(min)}</span><span>{fmt(max)}</span>
@@ -148,18 +126,17 @@ export default function SimulationPage() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={runSim}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded transition-colors"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded transition-colors cursor-pointer"
               >
                 Run Simulation
               </button>
-              <button onClick={reset} className="px-4 py-2.5 border rounded text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+              <button onClick={reset} className="px-4 py-2.5 border rounded text-sm text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
                 Reset
               </button>
             </div>
           </div>
         </div>
 
-        {/* Results */}
         <div className="space-y-4">
           {!result ? (
             <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 border-dashed flex flex-col items-center justify-center text-center min-h-64">

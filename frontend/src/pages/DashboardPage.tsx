@@ -1,14 +1,13 @@
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { PageHeader, KPICard, Disclaimer, RiskBadge, PriorityBadge } from '../components/ui';
-import { seedHabitations, alerts } from '../data/seedData';
+import { alerts } from '../data/seedData';
 import { getRiskHexColor } from '../utils/riskColors';
-import { useStore } from '../store/useStore';
+import { useHabitations } from '../hooks/useHabitations';
 
 export default function DashboardPage() {
-  const customHabs = useStore(s => s.habitations);
-  const isReplaceMode = useStore(s => s.isReplaceMode);
-  const allHabitations = isReplaceMode && customHabs.length > 0 ? customHabs : [...seedHabitations, ...customHabs];
+  const { allHabitations } = useHabitations();
+
 
   const totalHabs = allHabitations.length;
   const highRisk = allHabitations.filter(h => h.risk_class === 'HIGH').length;

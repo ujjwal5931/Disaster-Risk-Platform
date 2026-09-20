@@ -1,9 +1,10 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Shield, Map, AlertTriangle, Activity, Navigation, Zap, Users, Sliders, Bell, FileText, Upload, Clock, Settings, BarChart2, LogOut, Info } from 'lucide-react';
+import { Shield, Map, AlertTriangle, Activity, Navigation, Zap, Users, Sliders, Bell, FileText, Upload, Clock, Settings, BarChart2, LogOut, Info, PieChart } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
 const NAV = [
   { to: '/dashboard', label: 'Dashboard', icon: BarChart2 },
+  { to: '/analytics', label: 'Analytics', icon: PieChart },
   { to: '/map', label: 'Risk Map', icon: Map },
   { to: '/red-zones', label: 'Red Zones', icon: AlertTriangle },
   { to: '/capacity', label: 'Carrying Capacity', icon: Activity },

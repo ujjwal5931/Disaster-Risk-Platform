@@ -1,22 +1,19 @@
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { seedHabitations } from '../data/seedData';
 import { PageHeader, Disclaimer } from '../components/ui';
-import { useStore } from '../store/useStore';
+import { useHabitations } from '../hooks/useHabitations';
 
 import { Droplet, Home, HeartPulse, Wheat, Sparkles, RefreshCw } from 'lucide-react';
 
 export default function CarryingCapacityPage() {
-  const customHabs = useStore(s => s.habitations);
-  const isReplaceMode = useStore(s => s.isReplaceMode);
-  const allHabitations = isReplaceMode && customHabs.length > 0 ? customHabs : [...seedHabitations, ...customHabs];
+  const { allHabitations } = useHabitations();
 
-  const [sel, setSel] = useState(allHabitations[0]?.id || seedHabitations[0].id);
+  const [sel, setSel] = useState(allHabitations[0]?.id || '');
   const [waterAdj, setWaterAdj] = useState(0); // +/- %
   const [shelterAdj, setShelterAdj] = useState(0); // +/- %
   const [healthAdj, setHealthAdj] = useState(0); // +/- %
 
-  const h = allHabitations.find(x => x.id === sel) || allHabitations[0] || seedHabitations[0];
+  const h = allHabitations.find(x => x.id === sel) || allHabitations[0];
 
   // Dynamically calculate effective capacities considering adjustments
   const effectiveWater = Math.max(1, h.water_capacity_liters_per_day * (1 + waterAdj / 100));

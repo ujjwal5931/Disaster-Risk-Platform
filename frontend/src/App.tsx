@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import AppLayout from './components/layout/AppLayout';
 import DashboardPage from './pages/DashboardPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 import RiskMapPage from './pages/RiskMapPage';
 import RedZonesPage from './pages/RedZonesPage';
 import CarryingCapacityPage from './pages/CarryingCapacityPage';
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/map" element={<RiskMapPage />} />
           <Route path="/red-zones" element={<RedZonesPage />} />
           <Route path="/capacity" element={<CarryingCapacityPage />} />

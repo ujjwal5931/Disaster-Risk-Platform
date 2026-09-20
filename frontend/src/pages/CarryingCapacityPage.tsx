@@ -2,16 +2,20 @@ import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { seedHabitations } from '../data/seedData';
 import { PageHeader, Disclaimer } from '../components/ui';
+import { useStore } from '../store/useStore';
 
 import { Droplet, Home, HeartPulse, Wheat, Sparkles, RefreshCw } from 'lucide-react';
 
 export default function CarryingCapacityPage() {
-  const [sel, setSel] = useState(seedHabitations[0].id);
+  const customHabs = useStore(s => s.habitations);
+  const allHabitations = [...seedHabitations, ...customHabs];
+
+  const [sel, setSel] = useState(allHabitations[0]?.id || seedHabitations[0].id);
   const [waterAdj, setWaterAdj] = useState(0); // +/- %
   const [shelterAdj, setShelterAdj] = useState(0); // +/- %
   const [healthAdj, setHealthAdj] = useState(0); // +/- %
 
-  const h = seedHabitations.find(x => x.id === sel) || seedHabitations[0];
+  const h = allHabitations.find(x => x.id === sel) || allHabitations[0] || seedHabitations[0];
 
   // Dynamically calculate effective capacities considering adjustments
   const effectiveWater = Math.max(1, h.water_capacity_liters_per_day * (1 + waterAdj / 100));
@@ -63,7 +67,7 @@ export default function CarryingCapacityPage() {
             onChange={e => { setSel(e.target.value); resetAdjustments(); }}
             className="p-2 border rounded-lg text-sm bg-slate-50 font-medium focus:ring-2 focus:ring-blue-500"
           >
-            {seedHabitations.map(hab => (
+            {allHabitations.map(hab => (
               <option key={hab.id} value={hab.id}>
                 {hab.name} — {hab.district}, {hab.state} (Pop: {hab.population.toLocaleString()})
               </option>

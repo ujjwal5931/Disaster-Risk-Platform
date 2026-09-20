@@ -6,6 +6,7 @@ import L from 'leaflet';
 import { seedHabitations, seedRedZones, seedSafeZones } from '../data/seedData';
 import { getRiskHexColor } from '../utils/riskColors';
 import { RiskBadge, PriorityBadge } from '../components/ui';
+import { useStore } from '../store/useStore';
 
 // Fix Leaflet icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -30,12 +31,15 @@ const getDiamondIcon = () => L.divIcon({
 });
 
 export default function RiskMapPage() {
+  const customHabs = useStore(s => s.habitations);
+  const allHabitations = [...seedHabitations, ...customHabs];
+
   const [showHabs, setShowHabs] = useState(true);
   const [showRedZones, setShowRedZones] = useState(true);
   const [showSafeZones, setShowSafeZones] = useState(true);
   const [riskFilter, setRiskFilter] = useState('ALL');
 
-  const filteredHabs = seedHabitations.filter(h => riskFilter === 'ALL' || h.risk_class === riskFilter);
+  const filteredHabs = allHabitations.filter(h => riskFilter === 'ALL' || h.risk_class === riskFilter);
 
   return (
     <div className="relative w-full h-full">

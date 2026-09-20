@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { PageHeader, Disclaimer } from '../components/ui';
-import { Upload, FileText, Download, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, FileText, Download, CheckCircle, XCircle, Check } from 'lucide-react';
+import { useStore } from '../store/useStore';
 
 const REQUIRED_COLS = [
   'name', 'latitude', 'longitude', 'population', 'district', 'state',
@@ -27,13 +28,122 @@ function downloadTemplate() {
 }
 
 export default function DataUploadPage() {
+  const addUploadedHabitations = useStore(s => s.addUploadedHabitations);
+  const [importedCount, setImportedCount] = useState<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<{ rows: string[][]; headers: string[]; errors: string[] } | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const parseAndScoreHabitations = (lines: string[], headers: string[]) => {
+    const newItems = [];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const parts = line.split(',').map(p => p.trim());
+      const row: Record<string, any> = {};
+      headers.forEach((h, idx) => {
+        row[h] = parts[idx] || '';
+      });
+
+      const pop = parseInt(row.population) || 1000;
+      const hazardSev = parseFloat(row.hazard_severity) || 0.5;
+      const waterCap = parseFloat(row.water_capacity_liters_per_day) || pop * 30;
+      const shelterCap = parseFloat(row.shelter_capacity_persons) || Math.round(pop * 0.15);
+      const beds = parseFloat(row.healthcare_beds) || Math.max(1, Math.round(pop / 500));
+
+      // Calculate Real Risk Score (0-100)
+      const hazardScore = hazardSev * 100;
+      const vulScore = Math.min(100, (((parseInt(row.children_count) || 0) + (parseInt(row.elderly_count) || 0) + (parseInt(row.disabled_count) || 0)) / pop) * 100);
+      const calculatedRisk = Math.round(hazardScore * 0.45 + vulScore * 0.35 + (5 - (parseInt(row.housing_quality) || 3)) * 4);
+      const finalRisk = Math.min(100, Math.max(10, calculatedRisk));
+
+      const riskClass = finalRisk >= 75 ? 'CRITICAL' : finalRisk >= 50 ? 'HIGH' : finalRisk >= 25 ? 'MODERATE' : 'LOW';
+
+      // Calculate Capacity Utilization
+      const waterUtil = Math.round(((pop * 50) / Math.max(1, waterCap)) * 100);
+      const shelterUtil = Math.round(((pop * 0.25) / Math.max(1, shelterCap)) * 100);
+      const avgUtil = Math.round((waterUtil + shelterUtil) / 2);
+      const capStatus = avgUtil > 120 ? 'CRITICAL' : avgUtil > 100 ? 'OVERLOADED' : avgUtil > 70 ? 'STRESSED' : 'SAFE';
+
+      // Calculate Relocation Priority
+      const priority = finalRisk >= 75 || avgUtil > 120
+        ? 'P1-IMMEDIATE'
+        : finalRisk >= 50 || avgUtil > 100
+        ? 'P2-URGENT'
+        : finalRisk >= 25
+        ? 'P3-PLANNED'
+        : 'P4-MONITOR';
+
+      newItems.push({
+        id: `UPL-${Date.now()}-${i}`,
+        name: row.name || `Habitation ${i}`,
+        latitude: parseFloat(row.latitude) || 20.0,
+        longitude: parseFloat(row.longitude) || 78.0,
+        population: pop,
+        district: row.district || 'Custom District',
+        state: row.state || 'Custom State',
+        hazard_type: (row.hazard_type || 'flood').toLowerCase(),
+        primary_hazard: (row.hazard_type || 'flood').toLowerCase(),
+        hazard_severity: hazardSev,
+        elevation: parseFloat(row.elevation) || 100,
+        children_count: parseInt(row.children_count) || Math.round(pop * 0.2),
+        elderly_count: parseInt(row.elderly_count) || Math.round(pop * 0.1),
+        disabled_count: parseInt(row.disabled_count) || Math.round(pop * 0.02),
+        pregnant_women_count: 0,
+        below_poverty_count: Math.round(pop * 0.35),
+        housing_quality: parseInt(row.housing_quality) || 3,
+        road_accessibility: parseInt(row.road_accessibility) || 3,
+        historical_event_count: parseInt(row.historical_event_count) || 2,
+        last_event_year: 2023,
+        water_capacity_liters_per_day: waterCap,
+        shelter_capacity_persons: shelterCap,
+        healthcare_beds: beds,
+        evacuation_route_quality: 3,
+        food_stock_days: parseFloat(row.food_stock_days) || 5,
+        sanitation_coverage_pct: parseFloat(row.sanitation_coverage_pct) || 60,
+        safe_land_area_sqkm: parseFloat(row.safe_land_area_sqkm) || 1.0,
+        nearby_hospital_count: 1,
+        nearby_school_count: 2,
+        nearby_shelter_count: 1,
+        rainfall_annual_mm: 1000,
+        slope_degrees: 2,
+        soil_type: 'Alluvial',
+        risk_score: finalRisk,
+        risk_class: riskClass,
+        capacity_utilization: avgUtil,
+        capacity_status: capStatus,
+        relocation_priority: priority,
+        contributing_factors: [
+          { factor: 'Hazard Intensity', score: Math.round(hazardSev * 100), contribution: 45, description: `${row.hazard_type || 'Hazard'} severity rating` },
+          { factor: 'Population Vulnerability', score: Math.round(vulScore), contribution: 35, description: 'Demographic vulnerability density' }
+        ],
+        explanation: `${riskClass} risk assessed based on ${row.hazard_type || 'hazard'} severity (${hazardSev}) and ${avgUtil}% resource capacity stress.`,
+        recommended_actions: priority === 'P1-IMMEDIATE' ? ['Trigger Immediate Relocation Plan', 'Alert District Magistrate'] : ['Pre-position resources', 'Monitor capacity']
+      });
+    }
+    return newItems;
+  };
+
+  const handleImport = () => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = (e.target?.result as string) || '';
+      const lines = text.split('\n').filter(Boolean);
+      const headers = lines[0]?.split(',').map(h => h.trim().toLowerCase()) || [];
+      const parsedHabs = parseAndScoreHabitations(lines, headers);
+      if (parsedHabs.length > 0) {
+        addUploadedHabitations(parsedHabs);
+        setImportedCount(parsedHabs.length);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleFile = (f: File) => {
     setFile(f);
+    setImportedCount(null);
     if (f.name.endsWith('.csv')) {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -149,12 +259,43 @@ export default function DataUploadPage() {
             </div>
           )}
           {preview.errors.length === 0 && (
-            <div className="p-4 border-t">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium text-sm">
-                Import Data (Demo Mode — no actual import)
+            <div className="p-4 border-t bg-slate-50 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-500">All columns validated against Purva Drishti schema.</p>
+              </div>
+              <button
+                onClick={handleImport}
+                disabled={importedCount !== null}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded font-bold text-sm shadow-sm transition-colors ${
+                  importedCount !== null
+                    ? 'bg-emerald-600 text-white cursor-default'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                }`}
+              >
+                {importedCount !== null ? (
+                  <>
+                    <Check className="w-4 h-4" /> Successfully Ingested ({importedCount} Records)
+                  </>
+                ) : (
+                  'Ingest & Calculate Risk Scores'
+                )}
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {importedCount !== null && (
+        <div className="mb-6 p-4 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl shadow-sm flex items-center justify-between animate-fade-in">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <div className="font-bold text-sm">Data Ingestion Complete!</div>
+              <div className="text-xs text-emerald-700">
+                {importedCount} new habitations have been scored, classified into risk zones, and added across GIS Risk Map, Dashboard, Relocation, and Carrying Capacity.
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

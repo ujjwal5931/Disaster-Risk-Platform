@@ -3,30 +3,34 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } fro
 import { PageHeader, KPICard, Disclaimer, RiskBadge, PriorityBadge } from '../components/ui';
 import { seedHabitations, alerts } from '../data/seedData';
 import { getRiskHexColor } from '../utils/riskColors';
+import { useStore } from '../store/useStore';
 
 export default function DashboardPage() {
-  const totalHabs = seedHabitations.length;
-  const highRisk = seedHabitations.filter(h => h.risk_class === 'HIGH').length;
-  const criticalRisk = seedHabitations.filter(h => h.risk_class === 'CRITICAL').length;
-  const capExceeded = seedHabitations.filter(h => h.capacity_utilization > 100).length;
-  const immediateP1 = seedHabitations.filter(h => h.relocation_priority === 'P1-IMMEDIATE').length;
-  const popAtRisk = seedHabitations.filter(h => h.risk_class === 'HIGH' || h.risk_class === 'CRITICAL')
+  const customHabs = useStore(s => s.habitations);
+  const allHabitations = [...seedHabitations, ...customHabs];
+
+  const totalHabs = allHabitations.length;
+  const highRisk = allHabitations.filter(h => h.risk_class === 'HIGH').length;
+  const criticalRisk = allHabitations.filter(h => h.risk_class === 'CRITICAL').length;
+  const capExceeded = allHabitations.filter(h => h.capacity_utilization > 100).length;
+  const immediateP1 = allHabitations.filter(h => h.relocation_priority === 'P1-IMMEDIATE').length;
+  const popAtRisk = allHabitations.filter(h => h.risk_class === 'HIGH' || h.risk_class === 'CRITICAL')
     .reduce((acc, h) => acc + h.population, 0);
 
   const pieData = [
     { name: 'CRITICAL', value: criticalRisk },
     { name: 'HIGH', value: highRisk },
-    { name: 'MODERATE', value: seedHabitations.filter(h => h.risk_class === 'MODERATE').length },
-    { name: 'LOW', value: seedHabitations.filter(h => h.risk_class === 'LOW').length },
+    { name: 'MODERATE', value: allHabitations.filter(h => h.risk_class === 'MODERATE').length },
+    { name: 'LOW', value: allHabitations.filter(h => h.risk_class === 'LOW').length },
   ];
 
-  const hazards = seedHabitations.reduce((acc, h) => {
+  const hazards = allHabitations.reduce((acc, h) => {
     acc[h.hazard_type] = (acc[h.hazard_type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
   const barData = Object.keys(hazards).map(k => ({ name: k.toUpperCase(), count: hazards[k] }));
 
-  const top10 = [...seedHabitations].sort((a, b) => b.risk_score - a.risk_score).slice(0, 10);
+  const top10 = [...allHabitations].sort((a, b) => b.risk_score - a.risk_score).slice(0, 10);
   const recentAlerts = alerts.slice(0, 4);
 
   return (

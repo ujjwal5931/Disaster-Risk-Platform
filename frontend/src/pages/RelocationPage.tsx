@@ -1,20 +1,27 @@
 import { useState } from 'react';
 import { seedHabitations, seedSafeZones } from '../data/seedData';
 import { PageHeader, RiskBadge, PriorityBadge, Disclaimer } from '../components/ui';
+import { useStore } from '../store/useStore';
 
 export default function RelocationPage() {
   const [tab, setTab] = useState('P1-IMMEDIATE');
-  const filtered = seedHabitations.filter(h => h.relocation_priority === tab);
+  const customHabs = useStore(s => s.habitations);
+  const relocationPlans = useStore(s => s.relocationPlans);
+  const assignRelocation = useStore(s => s.assignRelocation);
+
+  // Combine seed habitations + user uploaded habitations
+  const allHabitations = [...seedHabitations, ...customHabs];
+  const filtered = allHabitations.filter(h => h.relocation_priority === tab);
   const [sel, setSel] = useState(filtered[0] || null);
 
   const TABS = ['P1-IMMEDIATE', 'P2-URGENT', 'P3-PLANNED', 'P4-MONITOR'];
 
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const handleSelectRelocation = (sz: any) => {
-    setSelectedZone(sz.name);
-    setSuccessMsg(`Relocation plan confirmed: ${sel.name} will be moved to ${sz.name} (${sz.available_capacity} capacity available). Action logged for disaster management authority.`);
+    if (!sel) return;
+    assignRelocation(sel.id, sz);
+    setSuccessMsg(`Official Relocation Plan Registered: ${sel.name} will be relocated to ${sz.name} (${sz.available_capacity.toLocaleString()} emergency capacity). Logged for District Magistrate & NDMA.`);
     setTimeout(() => setSuccessMsg(null), 6000);
   };
 
@@ -48,9 +55,14 @@ export default function RelocationPage() {
                 <RiskBadge riskClass={h.risk_class} />
               </div>
               <p className="text-sm text-slate-500 mb-2">{h.district}</p>
-              <div className="flex gap-4 text-sm">
+              <div className="flex gap-4 text-sm items-center justify-between">
                 <div><strong>Pop:</strong> {h.population.toLocaleString()}</div>
                 <div><strong>Cap:</strong> {h.capacity_utilization}%</div>
+                {relocationPlans[h.id] && (
+                  <span className="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded">
+                    ↳ {relocationPlans[h.id].safeZoneName}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -69,7 +81,8 @@ export default function RelocationPage() {
               <h4 className="font-bold mb-3 text-slate-800">Top 3 Recommended Safe Zones</h4>
               <div className="space-y-4">
                 {seedSafeZones.slice(0,3).map((sz, i) => {
-                  const isAssigned = selectedZone === sz.name;
+                  const currentPlan = relocationPlans[sel.id];
+                  const isAssigned = currentPlan?.safeZoneName === sz.name;
                   return (
                     <div key={sz.id} className={`p-3 border rounded transition-all ${isAssigned ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400' : 'border-green-200 bg-green-50'}`}>
                       <div className="flex justify-between items-start mb-2">
@@ -87,10 +100,10 @@ export default function RelocationPage() {
                         className={`w-full text-xs font-semibold py-2 rounded transition-colors ${
                           isAssigned
                             ? 'bg-emerald-700 text-white'
-                            : 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-green-600 hover:bg-green-700 text-white cursor-pointer'
                         }`}
                       >
-                        {isAssigned ? '✓ Selected for Relocation' : 'Select for Relocation'}
+                        {isAssigned ? `✓ Assigned Destination (${currentPlan.timestamp.split(',')[0]})` : 'Select for Relocation'}
                       </button>
                     </div>
                   );

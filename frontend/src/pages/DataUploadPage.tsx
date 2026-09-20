@@ -34,19 +34,86 @@ function downloadCurrentDataset() {
   a.click();
 }
 
+function exportSession(habitations: any[], isReplaceMode: boolean, relocationPlans: any, weightConfig: any) {
+  const sessionData = {
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    platform: 'Purva Drishti',
+    isReplaceMode,
+    habitations,
+    relocationPlans,
+    weightConfig,
+  };
+  const blob = new Blob([JSON.stringify(sessionData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `purva_drishti_session_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+
 export default function DataUploadPage() {
   const addUploadedHabitations = useStore(s => s.addUploadedHabitations);
   const replaceAllHabitations = useStore(s => s.replaceAllHabitations);
   const clearUploadedHabitations = useStore(s => s.clearUploadedHabitations);
   const customHabs = useStore(s => s.habitations);
   const isReplaceMode = useStore(s => s.isReplaceMode);
+  const relocationPlans = useStore(s => s.relocationPlans);
+  const weightConfig = useStore(s => s.weightConfig);
+  const applyWeights = useStore(s => s.applyWeights);
 
   const [uploadMode, setUploadMode] = useState<'append' | 'replace'>('append');
   const [importedCount, setImportedCount] = useState<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<{ rows: string[][]; headers: string[]; errors: string[] } | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [sessionMsg, setSessionMsg] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const sessionInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportSession = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target?.result as string);
+        if (data.platform !== 'Purva Drishti') {
+          setSessionMsg('❌ Invalid session file — not a Purva Drishti export.');
+          return;
+        }
+        // Restore habitations
+        if (Array.isArray(data.habitations) && data.habitations.length > 0) {
+          if (data.isReplaceMode) {
+            replaceAllHabitations(data.habitations);
+          } else {
+            replaceAllHabitations(data.habitations); // always replace on import so no duplicates
+          }
+        }
+        // Restore relocation plans
+        if (data.relocationPlans) {
+          try {
+            localStorage.setItem('purva_drishti_relocation_plans', JSON.stringify(data.relocationPlans));
+            // Force store reload
+            window.location.reload();
+          } catch (e) {}
+        }
+        // Restore weights
+        if (data.weightConfig) {
+          applyWeights(data.weightConfig);
+        }
+        setSessionMsg(`✅ Session imported: ${data.habitations?.length || 0} habitations, ${Object.keys(data.relocationPlans || {}).length} relocation plans, exported on ${data.exportedAt?.slice(0, 10) || '?'}.`);
+      } catch {
+        setSessionMsg('❌ Failed to parse session file. Make sure it is a valid Purva Drishti JSON export.');
+      }
+      setTimeout(() => setSessionMsg(null), 8000);
+    };
+    reader.readAsText(f);
+    e.target.value = '';
+  };
+
 
   const parseAndScoreHabitations = (lines: string[], headers: string[]) => {
     const newItems = [];
@@ -191,6 +258,64 @@ export default function DataUploadPage() {
         title="Data Upload & Management"
         subtitle="Ingest geospatial and demographic survey records, configure merge or replace mode, or export current datasets."
       />
+
+      {/* ===== SESSION SYNC PANEL ===== */}
+      <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-lg">🔄</span>
+          <h3 className="font-bold text-blue-900 text-sm">Cross-Browser Session Sync</h3>
+          <span className="text-[11px] bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded ml-1">IMPORTANT</span>
+        </div>
+        <p className="text-xs text-blue-700 mb-4 leading-relaxed">
+          Uploaded data is stored in <strong>this browser only</strong>. To use the same data in another browser or device, 
+          export a session file here and import it there.
+        </p>
+
+        {sessionMsg && (
+          <div className={`mb-3 p-3 rounded-lg text-sm font-medium border ${sessionMsg.startsWith('✅') ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
+            {sessionMsg}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Export */}
+          <button
+            onClick={() => exportSession(customHabs, isReplaceMode, relocationPlans, weightConfig)}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-sm transition-colors shadow"
+          >
+            <Download className="w-4 h-4" />
+            <div className="text-left">
+              <div>Export Session</div>
+              <div className="text-xs font-normal opacity-80">{customHabs.length} habs · {Object.keys(relocationPlans).length} relocations · weights saved</div>
+            </div>
+          </button>
+
+          {/* Import */}
+          <div>
+            <input
+              ref={sessionInputRef}
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={handleImportSession}
+            />
+            <button
+              onClick={() => sessionInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white hover:bg-blue-50 text-blue-700 border-2 border-blue-300 rounded-xl font-semibold text-sm transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              <div className="text-left">
+                <div>Import Session</div>
+                <div className="text-xs font-normal text-blue-500">Load .json from another browser</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <p className="text-[11px] text-blue-500 mt-3">
+          💡 Workflow: Upload data here → Export Session → Open new browser → Go to Data Upload → Import Session
+        </p>
+      </div>
 
       {/* Active Dataset Status / Revert */}
       {customHabs.length > 0 && (

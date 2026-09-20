@@ -568,21 +568,33 @@ class DRIPSHandler(http.server.BaseHTTPRequestHandler):
 
 def run():
     import socketserver
-    db_path = "app/data/database.db"
-    os.makedirs("app/data", exist_ok=True)
-    if not os.path.exists(db_path) or os.path.getsize(db_path) < 1000:
-        print("[startup] Seeding database...")
-        from app.data.seed import seed_database
-        seed_database(db_path)
+    from app.database import USE_POSTGRES, count_rows
+    from app.data.schema import create_schema
 
-    with socketserver.TCPServer(("0.0.0.0", PORT), DRIPSHandler) as httpd:
-        print(f"[DRIPS] Server running at http://localhost:{PORT}")
-        print(f"[DRIPS] API endpoints available at http://localhost:{PORT}/api/")
+    # Create schema (idempotent — safe on every boot)
+    create_schema()
+
+    # Seed only if empty — critical for Render (restarts the dyno each deploy)
+    if count_rows("habitations") == 0:
+        print("[startup] Empty database — seeding demo data...")
+        from app.data.seed import seed_database
+        seed_database()
+    else:
+        print(f"[startup] Database has {count_rows('habitations')} habitations — skipping seed.")
+
+    db_label = "PostgreSQL (Neon)" if USE_POSTGRES else "SQLite (local)"
+    print(f"[startup] Database: {db_label}")
+
+    port = int(os.environ.get("PORT", PORT))
+    with socketserver.TCPServer(("0.0.0.0", port), DRIPSHandler) as httpd:
+        print(f"[DRIPS] Server running at http://0.0.0.0:{port}")
+        print(f"[DRIPS] API: http://localhost:{port}/api/")
         print(f"[DRIPS] Press Ctrl+C to stop")
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:
             print("\n[DRIPS] Server stopped.")
+
 
 
 if __name__ == "__main__":

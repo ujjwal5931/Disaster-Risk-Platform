@@ -992,201 +992,118 @@ HAZARD_EVENTS = [
 ]
 
 
-def seed_database(db_path: str):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    conn.execute("PRAGMA journal_mode=WAL")
 
-    # ── Schema ─────────────────────────────────────────────────────────────
-    cursor.executescript("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        role TEXT NOT NULL,
-        full_name TEXT,
-        region TEXT
-    );
 
-    CREATE TABLE IF NOT EXISTS habitations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        district TEXT NOT NULL,
-        state TEXT NOT NULL,
-        latitude REAL NOT NULL,
-        longitude REAL NOT NULL,
-        elevation REAL,
-        population INTEGER NOT NULL,
-        children_count INTEGER DEFAULT 0,
-        elderly_count INTEGER DEFAULT 0,
-        disabled_count INTEGER DEFAULT 0,
-        pregnant_women_count INTEGER DEFAULT 0,
-        below_poverty_count INTEGER DEFAULT 0,
-        housing_quality INTEGER DEFAULT 3,
-        road_accessibility INTEGER DEFAULT 3,
-        hazard_type TEXT DEFAULT 'none',
-        hazard_severity REAL DEFAULT 0.0,
-        distance_from_hazard_km REAL DEFAULT 0.0,
-        historical_event_count INTEGER DEFAULT 0,
-        last_event_year INTEGER DEFAULT 2000,
-        water_capacity_liters_per_day REAL DEFAULT 0,
-        shelter_capacity_persons INTEGER DEFAULT 0,
-        healthcare_beds INTEGER DEFAULT 0,
-        evacuation_route_quality INTEGER DEFAULT 3,
-        food_stock_days REAL DEFAULT 7.0,
-        sanitation_coverage_pct REAL DEFAULT 50.0,
-        safe_land_area_sqkm REAL DEFAULT 1.0,
-        nearby_hospital_count INTEGER DEFAULT 0,
-        nearby_school_count INTEGER DEFAULT 0,
-        nearby_shelter_count INTEGER DEFAULT 0,
-        soil_type TEXT DEFAULT 'loam',
-        rainfall_annual_mm REAL DEFAULT 800.0,
-        slope_degrees REAL DEFAULT 5.0,
-        elevation_m REAL DEFAULT 200.0
-    );
+def seed_database():
+    """
+    Seed all tables using the dual-mode DB adapter.
+    Works with both SQLite (local) and PostgreSQL (Neon).
+    Called from seed_db.py — which already handles idempotency checks.
+    """
+    from app.database import execute_many, execute_write, USE_POSTGRES
 
-    CREATE TABLE IF NOT EXISTS red_zones (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        zone_id TEXT UNIQUE NOT NULL,
-        name TEXT NOT NULL,
-        hazard_type TEXT NOT NULL,
-        risk_score INTEGER NOT NULL,
-        population_exposed INTEGER NOT NULL,
-        habitation_count INTEGER NOT NULL,
-        capacity_stress REAL NOT NULL,
-        relocation_priority TEXT NOT NULL,
-        description TEXT,
-        polygon_coords TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS safe_zones (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        zone_id TEXT UNIQUE NOT NULL,
-        name TEXT NOT NULL,
-        district TEXT NOT NULL,
-        state TEXT NOT NULL,
-        latitude REAL NOT NULL,
-        longitude REAL NOT NULL,
-        available_capacity INTEGER NOT NULL,
-        safety_score REAL NOT NULL,
-        healthcare_access TEXT NOT NULL,
-        road_access TEXT NOT NULL,
-        water_availability TEXT NOT NULL,
-        description TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS alerts (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        severity TEXT NOT NULL,
-        title TEXT NOT NULL,
-        message TEXT NOT NULL,
-        population_affected INTEGER DEFAULT 0,
-        recommended_action TEXT,
-        timestamp TEXT NOT NULL,
-        acknowledged INTEGER DEFAULT 0
-    );
-
-    CREATE TABLE IF NOT EXISTS hazard_events (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        year INTEGER NOT NULL,
-        hazard_type TEXT NOT NULL,
-        affected_districts TEXT NOT NULL,
-        deaths INTEGER DEFAULT 0,
-        displaced INTEGER DEFAULT 0,
-        description TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS simulation_runs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        habitation_id INTEGER,
-        parameters TEXT NOT NULL,
-        result TEXT NOT NULL,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
-
-    # ── Users ───────────────────────────────────────────────────────────────
-    users = [
-        ("admin", get_password_hash("admin123"), "admin", "Administrator", "All India"),
-        ("officer", get_password_hash("officer123"), "officer", "District Officer", "Bahraich District"),
-        ("viewer", get_password_hash("viewer123"), "viewer", "Read-Only Viewer", "All India"),
+    # ── Habitations ──────────────────────────────────────────────────────────
+    cols = [
+        "name", "district", "state", "latitude", "longitude", "elevation",
+        "population", "children_count", "elderly_count", "disabled_count",
+        "pregnant_women_count", "below_poverty_count", "housing_quality",
+        "road_accessibility", "hazard_type", "hazard_severity",
+        "distance_from_hazard_km", "historical_event_count", "last_event_year",
+        "water_capacity_liters_per_day", "shelter_capacity_persons",
+        "healthcare_beds", "evacuation_route_quality", "food_stock_days",
+        "sanitation_coverage_pct", "safe_land_area_sqkm",
+        "nearby_hospital_count", "nearby_school_count", "nearby_shelter_count",
+        "soil_type", "rainfall_annual_mm", "slope_degrees",
     ]
-    cursor.executemany(
-        "INSERT OR IGNORE INTO users (username, password, role, full_name, region) VALUES (?, ?, ?, ?, ?)",
-        users
+    placeholders = ", ".join(["?"] * len(cols))
+    col_str = ", ".join(cols)
+    hab_rows = []
+    for h in HABITATIONS:
+        values = []
+        for c in cols:
+            v = h.get(c, h.get("elevation_m") if c == "elevation" else None)
+            values.append(v)
+        hab_rows.append(tuple(values))
+    execute_many(
+        f"INSERT INTO habitations ({col_str}) VALUES ({placeholders})",
+        hab_rows,
     )
+    print(f"[seed] Inserted {len(hab_rows)} habitations")
 
-    # ── Habitations ─────────────────────────────────────────────────────────
-    cursor.execute("SELECT COUNT(*) FROM habitations")
-    if cursor.fetchone()[0] == 0:
-        cols = [
-            "name", "district", "state", "latitude", "longitude", "elevation",
-            "population", "children_count", "elderly_count", "disabled_count",
-            "pregnant_women_count", "below_poverty_count", "housing_quality",
-            "road_accessibility", "hazard_type", "hazard_severity",
-            "distance_from_hazard_km", "historical_event_count", "last_event_year",
-            "water_capacity_liters_per_day", "shelter_capacity_persons",
-            "healthcare_beds", "evacuation_route_quality", "food_stock_days",
-            "sanitation_coverage_pct", "safe_land_area_sqkm",
-            "nearby_hospital_count", "nearby_school_count", "nearby_shelter_count",
-            "soil_type", "rainfall_annual_mm", "slope_degrees", "elevation_m",
-        ]
-        placeholders = ", ".join(["?"] * len(cols))
-        col_str = ", ".join(cols)
-        for h in HABITATIONS:
-            values = tuple(h[c] for c in cols)
-            cursor.execute(f"INSERT INTO habitations ({col_str}) VALUES ({placeholders})", values)
+    # ── Red Zones ────────────────────────────────────────────────────────────
+    rz_rows = [
+        (rz["name"], rz["hazard_type"], rz["risk_score"],
+         rz["description"], rz["polygon_coords"],
+         rz.get("area_sqkm", 0.0), rz["population_exposed"],
+         rz.get("relocation_priority", "HIGH"))
+        for rz in RED_ZONES
+    ]
+    execute_many(
+        """INSERT INTO red_zones
+           (name, hazard_type, risk_score, description, polygon_coords,
+            area_sqkm, population_exposed, severity_level)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        rz_rows,
+    )
+    print(f"[seed] Inserted {len(rz_rows)} red zones")
 
-    # ── Red Zones ───────────────────────────────────────────────────────────
-    cursor.execute("SELECT COUNT(*) FROM red_zones")
-    if cursor.fetchone()[0] == 0:
-        for rz in RED_ZONES:
-            cursor.execute("""
-                INSERT INTO red_zones (zone_id, name, hazard_type, risk_score,
-                    population_exposed, habitation_count, capacity_stress,
-                    relocation_priority, description, polygon_coords)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (rz["zone_id"], rz["name"], rz["hazard_type"], rz["risk_score"],
-                  rz["population_exposed"], rz["habitation_count"], rz["capacity_stress"],
-                  rz["relocation_priority"], rz["description"], rz["polygon_coords"]))
+    # ── Safe Zones ───────────────────────────────────────────────────────────
+    sz_rows = [
+        (sz["name"], sz["district"], sz["state"],
+         sz["latitude"], sz["longitude"],
+         sz["available_capacity"], sz["available_capacity"],
+         sz["safety_score"],
+         1 if sz.get("healthcare_access") else 0,
+         1 if sz.get("water_availability") else 0,
+         1, sz.get("road_access", 3))
+        for sz in SAFE_ZONES
+    ]
+    execute_many(
+        """INSERT INTO safe_zones
+           (name, district, state, latitude, longitude,
+            capacity, available_capacity, safety_score,
+            has_healthcare, has_water, has_food_supply, road_quality)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        sz_rows,
+    )
+    print(f"[seed] Inserted {len(sz_rows)} safe zones")
 
-    # ── Safe Zones ──────────────────────────────────────────────────────────
-    cursor.execute("SELECT COUNT(*) FROM safe_zones")
-    if cursor.fetchone()[0] == 0:
-        for sz in SAFE_ZONES:
-            cursor.execute("""
-                INSERT INTO safe_zones (zone_id, name, district, state, latitude, longitude,
-                    available_capacity, safety_score, healthcare_access, road_access,
-                    water_availability, description)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (sz["zone_id"], sz["name"], sz["district"], sz["state"],
-                  sz["latitude"], sz["longitude"], sz["available_capacity"],
-                  sz["safety_score"], sz["healthcare_access"], sz["road_access"],
-                  sz["water_availability"], sz["description"]))
+    # ── Alerts ───────────────────────────────────────────────────────────────
+    al_rows = [
+        (a["title"], a["message"], a["severity"],
+         a["population_affected"], a["recommended_action"], a["timestamp"])
+        for a in ALERTS
+    ]
+    execute_many(
+        """INSERT INTO alerts
+           (title, message, severity, population_affected,
+            recommended_action, timestamp)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        al_rows,
+    )
+    print(f"[seed] Inserted {len(al_rows)} alerts")
 
-    # ── Alerts ──────────────────────────────────────────────────────────────
-    cursor.execute("SELECT COUNT(*) FROM alerts")
-    if cursor.fetchone()[0] == 0:
-        for a in ALERTS:
-            cursor.execute("""
-                INSERT INTO alerts (severity, title, message, population_affected,
-                    recommended_action, timestamp, acknowledged)
-                VALUES (?, ?, ?, ?, ?, ?, 0)
-            """, (a["severity"], a["title"], a["message"], a["population_affected"],
-                  a["recommended_action"], a["timestamp"]))
+    # ── Hazard Events ─────────────────────────────────────────────────────────
+    # Get habitation IDs (first 12 habitations map to hazard events)
+    from app.database import execute_query
+    habs = execute_query("SELECT id FROM habitations ORDER BY id LIMIT 12")
+    hab_ids = [h["id"] for h in habs]
 
-    # ── Hazard Events ────────────────────────────────────────────────────────
-    cursor.execute("SELECT COUNT(*) FROM hazard_events")
-    if cursor.fetchone()[0] == 0:
-        for he in HAZARD_EVENTS:
-            cursor.execute("""
-                INSERT INTO hazard_events (year, hazard_type, affected_districts,
-                    deaths, displaced, description)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (he["year"], he["hazard_type"], he["affected_districts"],
-                  he["deaths"], he["displaced"], he["description"]))
+    he_rows = []
+    for i, he in enumerate(HAZARD_EVENTS):
+        hab_id = hab_ids[i % len(hab_ids)] if hab_ids else 1
+        he_rows.append((
+            hab_id, he["hazard_type"], he["year"],
+            "HIGH", he["description"],
+            he["displaced"], 0.0,
+        ))
+    execute_many(
+        """INSERT INTO hazard_events
+           (habitation_id, event_type, year, severity,
+            description, affected_count, damage_inr_lakh)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        he_rows,
+    )
+    print(f"[seed] Inserted {len(he_rows)} hazard events")
+    print(f"[seed] ✓ Database seeded successfully")
 
-    conn.commit()
-    conn.close()
-    print(f"[seed] Database seeded successfully at {db_path}")
-    print(f"[seed] {len(HABITATIONS)} habitations | {len(RED_ZONES)} red zones | {len(SAFE_ZONES)} safe zones")

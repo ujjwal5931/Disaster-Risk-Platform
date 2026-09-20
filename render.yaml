@@ -1,0 +1,33 @@
+# Render Deployment Config (render.yaml)
+# ────────────────────────────────────────────────────────────────
+# Push this file to GitHub, then on render.com:
+#   New → Blueprint → select your repo → Render reads this file automatically.
+#
+# This deploys the DRIPS backend as a Python web service.
+# The frontend is deployed separately on Vercel.
+
+services:
+  - type: web
+    name: drips-backend
+    runtime: python
+    region: singapore        # closest to India — change to frankfurt if needed
+    plan: free               # free tier — sleeps after 15 min inactivity
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python3 seed_db.py
+    startCommand: python3 server.py
+    healthCheckPath: /api/dashboard
+
+    envVars:
+      # ── Set this in Render Dashboard after connecting Neon ──────────────────
+      # Go to: Render Dashboard → drips-backend → Environment → Add env var
+      # Key:   DATABASE_URL
+      # Value: postgresql://user:pass@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+      # (Copy from Neon Dashboard → Connection Details → Connection string)
+      - key: DATABASE_URL
+        sync: false          # Will be set manually in Render Dashboard
+
+      - key: PORT
+        value: "8000"
+
+      - key: PYTHON_VERSION
+        value: "3.12.0"      # Use 3.12 — avoids pydantic issues, has psycopg2 wheels

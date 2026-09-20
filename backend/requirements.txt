@@ -1,4 +1,14 @@
-fastapi==0.115.6
-uvicorn==0.32.0
-python-multipart==0.0.12
-anyio==4.6.2
+# DRIPS Backend Dependencies
+# ───────────────────────────────────────────────────────────────
+# This app runs on pure Python 3 stdlib with ZERO required dependencies.
+# server.py starts fine with just Python 3 installed.
+#
+# psycopg2-binary is ONLY needed for PostgreSQL (Neon) deployment.
+# On Render, set DATABASE_URL env var → psycopg2-binary auto-connects to Neon.
+# Local dev uses SQLite with no packages at all.
+
+# PostgreSQL driver for Neon (Render deployment)
+psycopg2-binary==2.9.10
+
+# Data import toolkit (optional - only if using import_data.py with Excel)
+# openpyxl==3.1.5

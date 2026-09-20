@@ -7,7 +7,8 @@ import { useStore } from '../store/useStore';
 
 export default function DashboardPage() {
   const customHabs = useStore(s => s.habitations);
-  const allHabitations = [...seedHabitations, ...customHabs];
+  const isReplaceMode = useStore(s => s.isReplaceMode);
+  const allHabitations = isReplaceMode && customHabs.length > 0 ? customHabs : [...seedHabitations, ...customHabs];
 
   const totalHabs = allHabitations.length;
   const highRisk = allHabitations.filter(h => h.risk_class === 'HIGH').length;

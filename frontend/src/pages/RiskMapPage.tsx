@@ -32,7 +32,8 @@ const getDiamondIcon = () => L.divIcon({
 
 export default function RiskMapPage() {
   const customHabs = useStore(s => s.habitations);
-  const allHabitations = [...seedHabitations, ...customHabs];
+  const isReplaceMode = useStore(s => s.isReplaceMode);
+  const allHabitations = isReplaceMode && customHabs.length > 0 ? customHabs : [...seedHabitations, ...customHabs];
 
   const [showHabs, setShowHabs] = useState(true);
   const [showRedZones, setShowRedZones] = useState(true);

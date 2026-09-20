@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { PageHeader, Disclaimer } from '../components/ui';
-import { Upload, FileText, Download, CheckCircle, XCircle, Check } from 'lucide-react';
+import { Upload, FileText, Download, CheckCircle, XCircle, Check, Database, RefreshCw, Layers, HardDrive, FileSpreadsheet } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 const REQUIRED_COLS = [
@@ -27,8 +27,21 @@ function downloadTemplate() {
   URL.revokeObjectURL(url);
 }
 
+function downloadCurrentDataset() {
+  const a = document.createElement('a');
+  a.href = '/purva_drishti_current_50_habitations.csv';
+  a.download = 'purva_drishti_current_50_habitations.csv';
+  a.click();
+}
+
 export default function DataUploadPage() {
   const addUploadedHabitations = useStore(s => s.addUploadedHabitations);
+  const replaceAllHabitations = useStore(s => s.replaceAllHabitations);
+  const clearUploadedHabitations = useStore(s => s.clearUploadedHabitations);
+  const customHabs = useStore(s => s.habitations);
+  const isReplaceMode = useStore(s => s.isReplaceMode);
+
+  const [uploadMode, setUploadMode] = useState<'append' | 'replace'>('append');
   const [importedCount, setImportedCount] = useState<number | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<{ rows: string[][]; headers: string[]; errors: string[] } | null>(null);
@@ -134,7 +147,11 @@ export default function DataUploadPage() {
       const headers = lines[0]?.split(',').map(h => h.trim().toLowerCase()) || [];
       const parsedHabs = parseAndScoreHabitations(lines, headers);
       if (parsedHabs.length > 0) {
-        addUploadedHabitations(parsedHabs);
+        if (uploadMode === 'replace') {
+          replaceAllHabitations(parsedHabs);
+        } else {
+          addUploadedHabitations(parsedHabs);
+        }
         setImportedCount(parsedHabs.length);
       }
     };
@@ -171,9 +188,96 @@ export default function DataUploadPage() {
   return (
     <div className="p-6 max-w-4xl">
       <PageHeader
-        title="Data Upload"
-        subtitle="Ingest new geospatial and demographic data to update risk assessments."
+        title="Data Upload & Management"
+        subtitle="Ingest geospatial and demographic survey records, configure merge or replace mode, or export current datasets."
       />
+
+      {/* Active Dataset Status / Revert */}
+      {customHabs.length > 0 && (
+        <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Database className="w-6 h-6 text-indigo-600 flex-shrink-0" />
+            <div>
+              <div className="font-semibold text-sm text-indigo-900">
+                Custom Dataset Active: {customHabs.length} Habitations
+              </div>
+              <p className="text-xs text-indigo-700">
+                Mode: {isReplaceMode ? 'Replacing default 50 habitations' : 'Appended with 50 default habitations (Total: ' + (50 + customHabs.length) + ' habitations)'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              clearUploadedHabitations();
+              setImportedCount(null);
+              setFile(null);
+              setPreview(null);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-indigo-100 text-indigo-700 border border-indigo-300 rounded-lg text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Reset to Default 50 Habitations
+          </button>
+        </div>
+      )}
+
+      {/* Mode Selector */}
+      <div className="bg-white rounded-xl border p-5 shadow-sm mb-6">
+        <h3 className="font-semibold text-sm text-slate-800 mb-1 flex items-center gap-2">
+          <Layers className="w-4 h-4 text-blue-600" />
+          Choose Ingestion Mode
+        </h3>
+        <p className="text-xs text-slate-500 mb-4">
+          Decide whether newly uploaded habitations should be merged with existing records or completely replace them.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div
+            onClick={() => setUploadMode('append')}
+            className={`cursor-pointer rounded-xl p-4 border-2 transition-all ${
+              uploadMode === 'append'
+                ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                : 'border-slate-200 hover:border-slate-300 bg-white'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-semibold text-sm text-slate-800">1. Append & Merge</span>
+              <input
+                type="radio"
+                name="uploadMode"
+                checked={uploadMode === 'append'}
+                onChange={() => setUploadMode('append')}
+                className="text-blue-600 focus:ring-blue-500"
+              />
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              <strong>Keeps the 50 default habitations</strong> and adds your new rows to them. Best for adding new survey clusters or neighboring tehsils.
+            </p>
+          </div>
+
+          <div
+            onClick={() => setUploadMode('replace')}
+            className={`cursor-pointer rounded-xl p-4 border-2 transition-all ${
+              uploadMode === 'replace'
+                ? 'border-blue-600 bg-blue-50/50 shadow-sm'
+                : 'border-slate-200 hover:border-slate-300 bg-white'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-semibold text-sm text-slate-800">2. Replace All (Overwrite)</span>
+              <input
+                type="radio"
+                name="uploadMode"
+                checked={uploadMode === 'replace'}
+                onChange={() => setUploadMode('replace')}
+                className="text-blue-600 focus:ring-blue-500"
+              />
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              <strong>Replaces all previous habitations</strong> with the uploaded dataset across the GIS Map, Dashboard, Relocation, and Capacity engines.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Upload Zone */}
       <div
@@ -181,15 +285,15 @@ export default function DataUploadPage() {
         onDrop={handleDrop}
         onDragOver={e => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
-        className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all mb-6 ${
+        className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all mb-6 ${
           dragOver ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'
         }`}
       >
         <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
         <h3 className="font-semibold text-lg text-slate-700 mb-1">
-          {file ? file.name : 'Click to upload or drag & drop'}
+          {file ? file.name : 'Click to upload or drag & drop habitations CSV'}
         </h3>
-        <p className="text-slate-400 text-sm">Supports .csv, .json, .geojson — Max 50MB</p>
+        <p className="text-slate-400 text-sm">Supports .csv (with required 20+ columns) — Max 50MB</p>
         <input
           ref={inputRef}
           type="file"
@@ -261,7 +365,9 @@ export default function DataUploadPage() {
           {preview.errors.length === 0 && (
             <div className="p-4 border-t bg-slate-50 flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500">All columns validated against Purva Drishti schema.</p>
+                <p className="text-xs text-slate-500">
+                  Ready to ingest using <strong>{uploadMode === 'replace' ? 'Replace All (Overwrite)' : 'Append & Merge'}</strong> mode.
+                </p>
               </div>
               <button
                 onClick={handleImport}
@@ -277,7 +383,7 @@ export default function DataUploadPage() {
                     <Check className="w-4 h-4" /> Successfully Ingested ({importedCount} Records)
                   </>
                 ) : (
-                  'Ingest & Calculate Risk Scores'
+                  `Ingest & Score (${uploadMode === 'replace' ? 'Replace All' : 'Append'})`
                 )}
               </button>
             </div>
@@ -292,28 +398,95 @@ export default function DataUploadPage() {
             <div>
               <div className="font-bold text-sm">Data Ingestion Complete!</div>
               <div className="text-xs text-emerald-700">
-                {importedCount} new habitations have been scored, classified into risk zones, and added across GIS Risk Map, Dashboard, Relocation, and Carrying Capacity.
+                {importedCount} habitations have been scored and mapped across GIS Risk Map, Dashboard, Relocation, and Carrying Capacity in{' '}
+                <strong>{uploadMode === 'replace' ? 'Replace All' : 'Append & Merge'}</strong> mode.
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Required Columns & Template */}
-      <div className="bg-white rounded-lg border shadow-sm p-5 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-sm">Required CSV Columns ({REQUIRED_COLS.length})</h3>
-          <button
-            onClick={downloadTemplate}
-            className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-sm font-medium transition-colors"
-          >
-            <Download className="w-4 h-4" /> Download Template
-          </button>
+      {/* Dataset & Template Downloads */}
+      <div className="bg-white rounded-xl border shadow-sm p-5 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 className="font-bold text-sm text-slate-800">Datasets & Template Downloads</h3>
+            <p className="text-xs text-slate-500">Get the full active 50 habitations dataset or a blank template.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={downloadCurrentDataset}
+              className="flex items-center gap-2 px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-blue-600" /> Download Current 50 Habitations (CSV)
+            </button>
+            <button
+              onClick={downloadTemplate}
+              className="flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <Download className="w-4 h-4 text-slate-600" /> Download CSV Template
+            </button>
+          </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+
+        <h4 className="font-semibold text-xs text-slate-600 mb-2">Required CSV Schema Columns ({REQUIRED_COLS.length}):</h4>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
           {REQUIRED_COLS.map(col => (
-            <div key={col} className="bg-slate-50 px-2 py-1 rounded text-xs font-mono text-slate-600">{col}</div>
+            <div key={col} className="bg-slate-50 px-2 py-1 rounded text-[11px] font-mono text-slate-600 border border-slate-100">{col}</div>
           ))}
+        </div>
+      </div>
+
+      {/* Repository Data Files Location Guide */}
+      <div className="bg-slate-50 rounded-xl border border-slate-200 p-5 mb-6">
+        <h3 className="font-bold text-sm text-slate-800 mb-1 flex items-center gap-2">
+          <HardDrive className="w-4 h-4 text-slate-600" />
+          Where are the Data Files Located in this Project Folder?
+        </h3>
+        <p className="text-xs text-slate-500 mb-4">
+          You can find and inspect all current habitations and disaster risk data files at these exact paths:
+        </p>
+
+        <div className="space-y-2 text-xs">
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <div>
+              <span className="font-bold text-slate-800">1. Full 50 Habitations Export (CSV)</span>
+              <p className="text-slate-500 font-mono text-[11px]">purva_drishti_current_50_habitations.csv</p>
+            </div>
+            <span className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">Root folder & public web root</span>
+          </div>
+
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <div>
+              <span className="font-bold text-slate-800">2. Frontend Dataset (TypeScript/JSON)</span>
+              <p className="text-slate-500 font-mono text-[11px]">frontend/src/data/seedData.ts</p>
+            </div>
+            <span className="text-[11px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-medium">50 Habitations, 10 Safe Zones, 10 Red Zones</span>
+          </div>
+
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <div>
+              <span className="font-bold text-slate-800">3. Backend Database Seed Script (Python)</span>
+              <p className="text-slate-500 font-mono text-[11px]">backend/app/data/seed.py</p>
+            </div>
+            <span className="text-[11px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-medium">SQLite & PostgreSQL Database Seeder</span>
+          </div>
+
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <div>
+              <span className="font-bold text-slate-800">4. Local SQLite Database</span>
+              <p className="text-slate-500 font-mono text-[11px]">backend/app/data/database.db</p>
+            </div>
+            <span className="text-[11px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-medium">Pre-populated tables & scores</span>
+          </div>
+
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+            <div>
+              <span className="font-bold text-slate-800">5. Sample Ingestion Template</span>
+              <p className="text-slate-500 font-mono text-[11px]">backend/my_habitations_template.csv</p>
+            </div>
+            <span className="text-[11px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">CSV structure for command-line uploads</span>
+          </div>
         </div>
       </div>
 

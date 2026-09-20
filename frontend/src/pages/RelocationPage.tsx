@@ -6,11 +6,12 @@ import { useStore } from '../store/useStore';
 export default function RelocationPage() {
   const [tab, setTab] = useState('P1-IMMEDIATE');
   const customHabs = useStore(s => s.habitations);
+  const isReplaceMode = useStore(s => s.isReplaceMode);
   const relocationPlans = useStore(s => s.relocationPlans);
   const assignRelocation = useStore(s => s.assignRelocation);
 
-  // Combine seed habitations + user uploaded habitations
-  const allHabitations = [...seedHabitations, ...customHabs];
+  // Combine seed habitations + user uploaded habitations (or replaced)
+  const allHabitations = isReplaceMode && customHabs.length > 0 ? customHabs : [...seedHabitations, ...customHabs];
   const filtered = allHabitations.filter(h => h.relocation_priority === tab);
   const [sel, setSel] = useState(filtered[0] || null);
 

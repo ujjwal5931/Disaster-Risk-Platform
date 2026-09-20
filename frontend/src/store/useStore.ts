@@ -20,9 +20,12 @@ interface AppState {
   clearFilters: () => void;
   selectedHabitationId: string | null;
   setSelectedHabitation: (id: string | null) => void;
+  isReplaceMode: boolean;
   habitations: any[];
   setHabitations: (habs: any[]) => void;
   addUploadedHabitations: (newHabs: any[]) => void;
+  replaceAllHabitations: (newHabs: any[]) => void;
+  clearUploadedHabitations: () => void;
   relocationPlans: Record<string, { safeZoneId: string; safeZoneName: string; timestamp: string }>;
   assignRelocation: (habitationId: string, safeZone: any) => void;
   riskWeights: Record<string, number>;
@@ -83,14 +86,30 @@ export const useStore = create<AppState>((set) => ({
   clearFilters: () => set({ filters: { hazardType: null, riskLevel: null, district: null, priorityLevel: null, populationRange: null } }),
   selectedHabitationId: null,
   setSelectedHabitation: (id) => set({ selectedHabitationId: id }),
+  isReplaceMode: typeof window !== 'undefined' && localStorage.getItem('purva_drishti_replace_mode') === 'true',
   habitations: getStoredHabitations(),
   setHabitations: (habs) => set({ habitations: habs }),
   addUploadedHabitations: (newHabs) => set((state) => {
     const updated = [...state.habitations, ...newHabs];
     try {
       localStorage.setItem('purva_drishti_uploaded_habitations', JSON.stringify(updated));
+      localStorage.removeItem('purva_drishti_replace_mode');
     } catch (e) {}
-    return { habitations: updated };
+    return { habitations: updated, isReplaceMode: false };
+  }),
+  replaceAllHabitations: (newHabs) => set(() => {
+    try {
+      localStorage.setItem('purva_drishti_uploaded_habitations', JSON.stringify(newHabs));
+      localStorage.setItem('purva_drishti_replace_mode', 'true');
+    } catch (e) {}
+    return { habitations: newHabs, isReplaceMode: true };
+  }),
+  clearUploadedHabitations: () => set(() => {
+    try {
+      localStorage.removeItem('purva_drishti_uploaded_habitations');
+      localStorage.removeItem('purva_drishti_replace_mode');
+    } catch (e) {}
+    return { habitations: [], isReplaceMode: false };
   }),
   relocationPlans: getStoredRelocations(),
   assignRelocation: (habitationId, safeZone) => set((state) => {

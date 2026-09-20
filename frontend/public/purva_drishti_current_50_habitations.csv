@@ -1,0 +1,51 @@
+id,name,district,state,latitude,longitude,population,hazard_type,elevation,children_count,elderly_count,disabled_count,pregnant_women_count,below_poverty_count,housing_quality,road_accessibility,hazard_severity,distance_from_hazard_km,historical_event_count,last_event_year,water_capacity_liters_per_day,shelter_capacity_persons,healthcare_beds,evacuation_route_quality,food_stock_days,sanitation_coverage_pct,safe_land_area_sqkm
+H001,Rampur,Bahraich,Uttar Pradesh,27.574,81.618,4820,flood,120,1200,600,150,80,3200,2,2,0.9,1.2,5,2023,50000,200,10,2,3,45,0.5
+H002,Chandpur Ghat,Gonda,Uttar Pradesh,27.130,81.875,3640,flood,120,800,400,100,50,2000,2,2,0.8,1.5,4,2022,40000,150,5,2,4,50,0.6
+H003,Sitapur Kalan,Sitapur,Uttar Pradesh,27.561,80.681,6200,flood,130,1500,700,200,100,4000,3,3,0.7,2.0,3,2021,60000,300,15,3,5,60,1.0
+H004,Fatehpur Tola,Lakhimpur Kheri,Uttar Pradesh,27.946,80.790,2890,flood,140,600,300,80,40,1500,3,3,0.6,2.5,2,2020,30000,100,5,3,6,65,0.8
+H005,Majhola Khas,Muzaffarpur,Bihar,26.120,85.391,5480,flood,50,1300,650,180,90,3800,1,1,0.95,0.8,6,2023,40000,150,8,1,2,35,0.4
+H006,Barauni Diara,Begusarai,Bihar,25.461,86.116,7800,flood,45,2000,900,250,120,5500,1,2,0.85,1.0,5,2022,60000,250,12,2,3,40,0.6
+H007,Kosi Tari,Supaul,Bihar,26.610,86.604,4100,flood,55,1000,500,120,60,2800,2,2,0.8,1.5,4,2021,35000,120,6,2,4,45,0.5
+H008,Bhagalpur Char,Bhagalpur,Bihar,25.241,87.014,2950,flood,40,700,350,90,45,2000,2,3,0.7,2.0,3,2020,25000,100,5,3,5,55,0.7
+H009,Garhi Malhipur,Bijnor,Uttar Pradesh,29.386,78.135,3280,flood,220,800,400,100,50,2200,3,3,0.6,2.5,2,2019,30000,120,6,3,6,60,0.9
+H010,Narayanpur Khurd,Ballia,Uttar Pradesh,25.752,84.104,2140,flood,60,500,250,60,30,1400,2,3,0.65,2.0,3,2020,20000,80,4,3,5,55,0.6
+H011,Tekari Diara,Gaya,Bihar,24.715,85.050,1680,flood,110,400,200,50,25,1100,3,4,0.5,3.0,1,2018,18000,70,3,4,7,70,0.8
+H012,Simrahi Tola,Darbhanga,Bihar,26.159,86.026,4350,flood,50,1100,550,140,70,3000,2,2,0.8,1.5,4,2022,38000,130,7,2,4,45,0.6
+H013,Devipuram,Chamoli,Uttarakhand,30.416,79.314,920,landslide,1800,200,100,20,10,600,2,1,0.9,0.5,3,2023,10000,50,2,1,5,50,0.1
+H014,Bagwari Thal,Pithoragarh,Uttarakhand,29.930,80.218,640,landslide,1600,150,80,15,8,400,2,2,0.8,0.8,2,2021,8000,40,2,2,6,55,0.2
+H015,Jwalapur Khata,Tehri Garhwal,Uttarakhand,30.388,78.476,1260,landslide,1500,300,150,30,15,800,3,2,0.7,1.0,2,2020,15000,60,3,2,7,60,0.3
+H016,Chaukhamba Patti,Rudraprayag,Uttarakhand,30.288,79.012,540,landslide,1900,120,60,10,5,350,2,1,0.95,0.3,4,2023,6000,30,1,1,4,45,0.1
+H017,Mandi Nagri,Mandi,Himachal Pradesh,31.705,76.924,1890,landslide,1000,400,200,40,20,1100,3,3,0.6,1.5,1,2019,20000,100,4,3,7,65,0.5
+H018,Kullu Upri,Kullu,Himachal Pradesh,31.958,77.109,780,landslide,1300,180,90,15,8,450,3,3,0.5,2.0,1,2018,10000,50,2,3,8,70,0.3
+H019,Rohru Khad,Shimla,Himachal Pradesh,31.197,77.750,1100,landslide,1500,250,120,25,12,650,4,4,0.4,2.5,0,0,12000,60,3,4,9,75,0.4
+H020,Sirmour Basti,Sirmour,Himachal Pradesh,30.570,77.468,1560,landslide,900,350,180,35,18,900,4,4,0.3,3.0,0,0,18000,80,4,4,10,80,0.6
+H021,Pentha Sasan,Kendrapara,Odisha,20.492,86.922,5680,cyclone,5,1400,700,150,75,3500,2,2,0.8,1.0,4,2021,50000,250,10,2,4,50,0.8
+H022,Balimela Coast,Malkangiri,Odisha,18.380,82.010,3240,cyclone,10,800,400,90,45,2000,3,3,0.7,2.0,3,2020,30000,150,6,3,5,55,0.6
+H023,Kakinada Kota,East Godavari,Andhra Pradesh,16.942,82.237,6800,cyclone,8,1700,850,180,90,4000,3,3,0.75,1.5,3,2020,60000,300,12,3,5,60,1.0
+H024,Puri Nua Sahi,Puri,Odisha,19.798,85.831,4280,cyclone,6,1000,500,110,55,2500,2,2,0.8,1.2,4,2021,40000,200,8,2,4,50,0.7
+H025,Gopalpur Titli,Ganjam,Odisha,19.259,84.889,2980,cyclone,12,700,350,80,40,1800,3,3,0.6,2.5,2,2019,28000,140,5,3,6,60,0.6
+H026,Balasore Sahi,Balasore,Odisha,21.493,86.930,3680,cyclone,10,900,450,100,50,2200,3,3,0.65,2.0,3,2020,35000,180,7,3,5,55,0.7
+H027,Digha Mohona,Purba Medinipur,West Bengal,21.628,87.534,2540,cyclone,15,600,300,70,35,1500,3,4,0.55,3.0,2,2019,25000,120,4,4,7,65,0.6
+H028,Sagar Dweep Tola,South 24 Parganas,West Bengal,21.639,88.085,4120,cyclone,3,1000,500,120,60,2800,1,1,0.9,0.5,5,2022,35000,150,6,1,3,40,0.4
+H029,Balotra Dhani,Barmer,Rajasthan,25.831,72.248,2180,drought,200,500,250,60,30,1400,3,2,0.7,0,3,2021,10000,100,4,2,4,45,2.0
+H030,Thar Basera,Jaisalmer,Rajasthan,26.911,70.892,890,drought,220,200,100,25,12,600,2,1,0.9,0,5,2023,3000,40,1,1,2,30,3.0
+H031,Latur Wadi,Latur,Maharashtra,18.405,76.572,3460,drought,600,800,400,90,45,2000,3,3,0.6,0,2,2019,20000,150,6,3,5,60,1.5
+H032,Osmanabad Pada,Osmanabad,Maharashtra,18.186,76.041,2760,drought,650,650,300,70,35,1600,3,3,0.5,0,1,2018,18000,120,5,3,6,65,1.2
+H033,Bikaner Dhaani,Bikaner,Rajasthan,27.980,73.312,1340,drought,240,300,150,35,18,800,2,2,0.8,0,4,2022,6000,60,2,2,3,40,2.5
+H034,Parbhani Tanda,Parbhani,Maharashtra,19.270,76.778,2020,drought,400,450,220,50,25,1200,3,4,0.4,0,1,2017,15000,100,4,4,7,70,1.0
+H035,Nagaur Basti,Nagaur,Rajasthan,27.201,73.730,1780,drought,300,400,200,45,22,1000,4,4,0.3,0,0,0,14000,90,3,4,8,75,1.5
+H036,Faridabad Fringe,Faridabad,Haryana,28.410,77.312,12400,industrial,210,3000,1200,300,150,6000,3,4,0.5,2.0,1,2020,100000,600,20,4,7,70,1.5
+H037,Noida Periphery,Gautam Buddha Nagar,Uttar Pradesh,28.524,77.389,18600,industrial,200,4500,1800,450,220,8000,4,4,0.4,3.0,0,0,150000,900,30,4,8,75,2.0
+H038,Panipat Colony,Panipat,Haryana,29.386,76.970,9800,industrial,220,2200,900,200,100,4500,3,4,0.5,2.5,1,2019,80000,500,15,4,7,70,1.2
+H039,Bahadurgarh West,Jhajjar,Haryana,28.692,76.924,7200,industrial,215,1800,700,180,90,3500,4,4,0.4,3.0,0,0,65000,400,12,4,8,75,1.0
+H040,Bhiwandi Outer,Thane,Maharashtra,19.298,73.063,15800,industrial,20,3500,1500,400,200,7000,3,3,0.6,1.5,2,2021,120000,700,25,3,6,65,1.8
+H041,Ghaziabad Fringe,Ghaziabad,Uttar Pradesh,28.668,77.451,11200,industrial,205,2500,1000,250,120,5000,4,5,0.3,4.0,0,0,90000,550,18,5,9,80,1.4
+H042,Pimpri East,Pune,Maharashtra,18.627,73.814,21000,industrial,560,5000,2000,500,250,9000,4,5,0.2,5.0,0,0,180000,1000,35,5,10,85,2.5
+H043,Hoshangabad Gram,Narmadapuram,Madhya Pradesh,22.745,77.728,3200,none,300,700,350,80,40,1500,4,4,0.1,10,0,0,30000,200,8,4,12,85,1.5
+H044,Betul Pahadi,Betul,Madhya Pradesh,21.908,77.901,2400,none,650,550,250,60,30,1100,4,4,0.1,12,0,0,25000,150,6,4,14,88,1.2
+H045,Chhindwara Gram,Chhindwara,Madhya Pradesh,22.058,78.936,1850,none,680,400,200,45,20,800,5,5,0.1,15,0,0,20000,120,5,5,15,90,1.0
+H046,Sagar Upnagar,Sagar,Madhya Pradesh,23.839,78.741,4100,none,420,900,450,100,50,1800,5,5,0.1,11,0,0,40000,250,10,5,13,92,1.8
+H047,Jabalpur Gram,Jabalpur,Madhya Pradesh,23.182,79.986,3600,none,410,800,400,90,45,1600,4,5,0.1,13,0,0,35000,220,9,5,11,86,1.6
+H048,Damoh Kheda,Damoh,Madhya Pradesh,23.833,79.442,2100,none,380,450,220,50,25,900,5,5,0.1,14,0,0,22000,130,5,5,16,91,1.1
+H049,Tikamgarh Nagar,Tikamgarh,Madhya Pradesh,24.744,78.831,2820,none,340,650,300,70,35,1300,4,4,0.1,10,0,0,28000,170,7,4,12,87,1.3
+H050,Chhatarpur Gram,Chhatarpur,Madhya Pradesh,24.912,79.588,1980,none,350,420,210,48,22,850,5,5,0.1,16,0,0,21000,125,5,5,17,94,1.0

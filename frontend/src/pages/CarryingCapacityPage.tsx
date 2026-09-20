@@ -8,7 +8,8 @@ import { Droplet, Home, HeartPulse, Wheat, Sparkles, RefreshCw } from 'lucide-re
 
 export default function CarryingCapacityPage() {
   const customHabs = useStore(s => s.habitations);
-  const allHabitations = [...seedHabitations, ...customHabs];
+  const isReplaceMode = useStore(s => s.isReplaceMode);
+  const allHabitations = isReplaceMode && customHabs.length > 0 ? customHabs : [...seedHabitations, ...customHabs];
 
   const [sel, setSel] = useState(allHabitations[0]?.id || seedHabitations[0].id);
   const [waterAdj, setWaterAdj] = useState(0); // +/- %

@@ -34,7 +34,7 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Options panel */}
-        <div className="lg:col-span-1 space-y-4">
+        <div className="lg:col-span-1 space-y-4 no-print">
           <div className="bg-white rounded-lg border shadow-sm p-4">
             <h3 className="font-bold text-sm mb-3">Report Options</h3>
             <div className="space-y-2 text-sm">
@@ -252,9 +252,30 @@ export default function ReportsPage() {
 
       <style>{`
         @media print {
-          body > * { display: none; }
-          #print-report { display: block !important; }
-          .no-print { display: none; }
+          aside, header, .no-print, nav, button {
+            display: none !important;
+          }
+          body, main, #root {
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .grid {
+            display: block !important;
+          }
+          .lg\\:col-span-1 {
+            display: none !important;
+          }
+          .lg\\:col-span-3 {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          #print-report {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            width: 100% !important;
+          }
         }
       `}</style>
     </div>

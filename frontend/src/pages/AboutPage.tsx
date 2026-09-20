@@ -2,10 +2,12 @@ import { Shield, MapPin, Activity, Navigation, Zap, Award, Users, Code, Database
 
 
 const TEAM = [
-  { name: 'Team Lead / Backend', role: 'Python API + Risk Engine', icon: '👨‍💻' },
-  { name: 'Frontend Developer', role: 'React + GIS + UI/UX', icon: '🎨' },
-  { name: 'Data Analyst', role: 'Seed Data + Risk Modelling', icon: '📊' },
-  { name: 'GIS Specialist', role: 'Spatial Analysis + Mapping', icon: '🗺️' },
+  { name: 'S. Ekshita Royal', role: 'Team Lead', icon: '👑' },
+  { name: 'Ujjwal Prakash', role: 'Development Lead', icon: '💻' },
+  { name: 'Mohit Saini', role: 'Development Lead', icon: '🚀' },
+  { name: 'Danish', role: 'ML Developer', icon: '🤖' },
+  { name: 'Anshu Raj', role: 'Data Analyst', icon: '📊' },
+  { name: 'S. Lakshmi Sai Meghana', role: 'Data Analyst', icon: '📈' },
 ];
 
 const TECH = [
@@ -136,7 +138,7 @@ export default function AboutPage() {
         <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-blue-600" /> Team
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {TEAM.map((m, i) => (
             <div key={i} className="text-center p-4 bg-slate-50 rounded-lg">
               <div className="text-3xl mb-2">{m.icon}</div>

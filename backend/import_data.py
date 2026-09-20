@@ -328,52 +328,27 @@ def read_file(path: str, sheet: str = None) -> list:
 
 # ─── Database Operations ───────────────────────────────────────────────────────
 
-def get_conn():
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+from app.database import (
+    execute_write,
+    execute_many,
+    table_exists,
+    count_rows,
+    USE_POSTGRES
+)
 
-
-def table_exists(conn, name: str) -> bool:
-    cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (name,))
-    return cur.fetchone() is not None
-
-
-def count_rows(conn, table: str) -> int:
-    if not table_exists(conn, table):
-        return 0
-    return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-
-
-def insert_habitation(conn, row: dict):
-    conn.execute("""
-        INSERT INTO habitations (
-            name, district, state, latitude, longitude, elevation, population,
-            hazard_type, hazard_severity, distance_from_hazard_km,
-            children_count, elderly_count, disabled_count,
-            pregnant_women_count, below_poverty_count,
-            housing_quality, road_accessibility,
-            historical_event_count, last_event_year,
-            water_capacity_liters_per_day, shelter_capacity_persons,
-            healthcare_beds, evacuation_route_quality,
-            food_stock_days, sanitation_coverage_pct, safe_land_area_sqkm,
-            nearby_hospital_count, nearby_school_count, nearby_shelter_count,
-            rainfall_annual_mm, slope_degrees, soil_type
-        ) VALUES (
-            :name, :district, :state, :latitude, :longitude, :elevation, :population,
-            :hazard_type, :hazard_severity, :distance_from_hazard_km,
-            :children_count, :elderly_count, :disabled_count,
-            :pregnant_women_count, :below_poverty_count,
-            :housing_quality, :road_accessibility,
-            :historical_event_count, :last_event_year,
-            :water_capacity_liters_per_day, :shelter_capacity_persons,
-            :healthcare_beds, :evacuation_route_quality,
-            :food_stock_days, :sanitation_coverage_pct, :safe_land_area_sqkm,
-            :nearby_hospital_count, :nearby_school_count, :nearby_shelter_count,
-            :rainfall_annual_mm, :slope_degrees, :soil_type
-        )
-    """, row)
+HAB_COLS = [
+    "name", "district", "state", "latitude", "longitude", "elevation", "population",
+    "hazard_type", "hazard_severity", "distance_from_hazard_km",
+    "children_count", "elderly_count", "disabled_count",
+    "pregnant_women_count", "below_poverty_count",
+    "housing_quality", "road_accessibility",
+    "historical_event_count", "last_event_year",
+    "water_capacity_liters_per_day", "shelter_capacity_persons",
+    "healthcare_beds", "evacuation_route_quality",
+    "food_stock_days", "sanitation_coverage_pct", "safe_land_area_sqkm",
+    "nearby_hospital_count", "nearby_school_count", "nearby_shelter_count",
+    "rainfall_annual_mm", "slope_degrees", "soil_type"
+]
 
 
 # ─── Main Logic ────────────────────────────────────────────────────────────────
@@ -430,40 +405,40 @@ def do_import(args):
         return
 
     # Write to DB
-    conn = get_conn()
-    if not table_exists(conn, "habitations"):
-        log.error(f"Database tables not found at {DB_PATH}. Run 'python3 seed_db.py' first.")
+    if not table_exists("habitations"):
+        log.error(f"Database tables not found. Run 'python3 seed_db.py' first.")
         sys.exit(1)
 
-    existing_count = count_rows(conn, "habitations")
+    existing_count = count_rows("habitations")
 
     if not args.merge:
         log.warn(f"Replacing {existing_count} existing habitations...")
-        conn.execute("DELETE FROM habitations")
+        execute_write("DELETE FROM habitations")
 
-    inserted = 0
-    skipped  = 0
-    for row in cleaned:
-        try:
-            insert_habitation(conn, row)
-            inserted += 1
-        except Exception as e:
-            log.warn(f"Skipped '{row.get('name')}': {e}")
-            skipped += 1
+    col_names = ", ".join(HAB_COLS)
+    placeholders = ", ".join(["?"] * len(HAB_COLS))
+    insert_sql = f"INSERT INTO habitations ({col_names}) VALUES ({placeholders})"
 
-    conn.commit()
-    conn.close()
+    rows_data = [tuple(row[col] for col in HAB_COLS) for row in cleaned]
+    execute_many(insert_sql, rows_data)
 
-    final_count = count_rows(get_conn(), "habitations")
-    log.ok(f"Import complete: {inserted} inserted, {skipped} skipped. Total in DB: {final_count}")
+    final_count = count_rows("habitations")
+    log.ok(f"Import complete: {len(rows_data)} inserted. Total in DB: {final_count}")
     log.log("Restart the backend server to see your data: python3 server.py")
 
 
 def do_reset(args):
     log.warn("Resetting database to demo data...")
     sys.path.insert(0, ".")
+    from app.data.schema import create_schema
     from app.data.seed import seed_database
-    seed_database(DB_PATH)
+    create_schema()
+    execute_write("DELETE FROM hazard_events")
+    execute_write("DELETE FROM alerts")
+    execute_write("DELETE FROM safe_zones")
+    execute_write("DELETE FROM red_zones")
+    execute_write("DELETE FROM habitations")
+    seed_database()
     log.ok("Demo data restored.")
 
 

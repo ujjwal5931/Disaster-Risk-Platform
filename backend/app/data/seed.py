@@ -1048,16 +1048,28 @@ def seed_database():
     print(f"[seed] Inserted {len(rz_rows)} red zones")
 
     # ── Safe Zones ───────────────────────────────────────────────────────────
-    sz_rows = [
-        (sz["name"], sz["district"], sz["state"],
-         sz["latitude"], sz["longitude"],
-         sz["available_capacity"], sz["available_capacity"],
-         sz["safety_score"],
-         1 if sz.get("healthcare_access") else 0,
-         1 if sz.get("water_availability") else 0,
-         1, sz.get("road_access", 3))
-        for sz in SAFE_ZONES
-    ]
+    ROAD_QUALITY_MAP = {
+        "Excellent": 5,
+        "Good": 4,
+        "Moderate": 3,
+        "Fair": 2,
+        "Poor": 1
+    }
+
+    sz_rows = []
+    for sz in SAFE_ZONES:
+        raw_road = sz.get("road_access", 3)
+        road_q = ROAD_QUALITY_MAP.get(raw_road, raw_road if isinstance(raw_road, int) else 3)
+        sz_rows.append((
+            sz["name"], sz["district"], sz["state"],
+            sz["latitude"], sz["longitude"],
+            sz["available_capacity"], sz["available_capacity"],
+            sz["safety_score"],
+            bool(sz.get("healthcare_access")),
+            bool(sz.get("water_availability")),
+            True,
+            road_q
+        ))
     execute_many(
         """INSERT INTO safe_zones
            (name, district, state, latitude, longitude,
@@ -1071,14 +1083,14 @@ def seed_database():
     # ── Alerts ───────────────────────────────────────────────────────────────
     al_rows = [
         (a["title"], a["message"], a["severity"],
-         a["population_affected"], a["recommended_action"], a["timestamp"])
+         a["population_affected"], a["recommended_action"], a["timestamp"], False)
         for a in ALERTS
     ]
     execute_many(
         """INSERT INTO alerts
            (title, message, severity, population_affected,
-            recommended_action, timestamp)
-           VALUES (?, ?, ?, ?, ?, ?)""",
+            recommended_action, timestamp, acknowledged)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
         al_rows,
     )
     print(f"[seed] Inserted {len(al_rows)} alerts")

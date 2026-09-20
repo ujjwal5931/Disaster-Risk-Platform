@@ -18,7 +18,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 // ── Habitation type ───────────────────────────────────────────────────────────
 
 export interface ApiHabitation {
-  id: number;
+  id: string;
   name: string;
   district: string;
   state: string;
@@ -49,8 +49,10 @@ export interface ApiHabitation {
   nearby_school_count: number;
   nearby_shelter_count: number;
   rainfall_annual_mm: number;
+  annual_rainfall_mm?: number;
   slope_degrees: number;
   soil_type: string;
+  is_coastal?: boolean;
   // Computed by backend risk/capacity engines
   risk_score: number;
   risk_class: string;
@@ -59,14 +61,14 @@ export interface ApiHabitation {
   relocation_priority: string;
   vulnerable_pct: number;
   // Frontend-only extras (derived client side)
-  primary_hazard?: string;
-  housing_quality_index?: number;
-  recommended_actions?: string[];
-  below_poverty_line_pct?: number;
+  primary_hazard: string;
+  housing_quality_index: number;
+  recommended_actions: string[];
+  below_poverty_line_pct: number;
   _relocationPlan?: any;
 }
 
-function buildRecommendedActions(h: ApiHabitation): string[] {
+function buildRecommendedActions(h: any): string[] {
   const actions: string[] = [];
   if (h.risk_class === 'CRITICAL') actions.push('Initiate immediate evacuation procedures');
   if (h.risk_class === 'HIGH') actions.push('Pre-position emergency resources and alert residents');
@@ -82,12 +84,19 @@ function buildRecommendedActions(h: ApiHabitation): string[] {
   return actions.slice(0, 5);
 }
 
-function normaliseHab(h: ApiHabitation): ApiHabitation {
+function normaliseHab(h: any): ApiHabitation {
+  const rain = h.rainfall_annual_mm ?? h.annual_rainfall_mm ?? 800;
   return {
     ...h,
-    primary_hazard: h.hazard_type,
-    housing_quality_index: h.housing_quality,
-    below_poverty_line_pct: h.population > 0 ? Math.round((h.below_poverty_count / h.population) * 100) : 0,
+    id: String(h.id),
+    elevation: h.elevation ?? 100,
+    rainfall_annual_mm: rain,
+    annual_rainfall_mm: rain,
+    is_coastal: h.is_coastal ?? (h.hazard_type === 'cyclone' || (h.elevation ?? 100) <= 15),
+    primary_hazard: h.hazard_type || h.primary_hazard || 'flood',
+    housing_quality: h.housing_quality ?? 3,
+    housing_quality_index: h.housing_quality_index ?? h.housing_quality ?? 3,
+    below_poverty_line_pct: h.population > 0 ? Math.round(((h.below_poverty_count ?? 0) / h.population) * 100) : 0,
     recommended_actions: buildRecommendedActions(h),
   };
 }
@@ -95,8 +104,8 @@ function normaliseHab(h: ApiHabitation): ApiHabitation {
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export async function fetchHabitations(): Promise<ApiHabitation[]> {
-  const data = await apiFetch<{ items?: ApiHabitation[] } | ApiHabitation[]>('/api/habitations');
-  const items: ApiHabitation[] = Array.isArray(data) ? data : (data as any).items ?? [];
+  const data = await apiFetch<{ items?: any[] } | any[]>('/api/habitations');
+  const items: any[] = Array.isArray(data) ? data : (data as any).items ?? [];
   return items.map(normaliseHab);
 }
 
@@ -106,7 +115,7 @@ export async function replaceAllHabitations(habitations: Partial<ApiHabitation>[
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { _relocationPlan, primary_hazard, housing_quality_index, recommended_actions,
             below_poverty_line_pct, id, risk_score, risk_class, capacity_utilization,
-            capacity_status, relocation_priority, vulnerable_pct, ...rest } = h as any;
+            capacity_status, relocation_priority, vulnerable_pct, is_coastal, annual_rainfall_mm, ...rest } = h as any;
     return rest;
   });
   return apiFetch<{ inserted: number }>('/api/habitations/replace-all', {

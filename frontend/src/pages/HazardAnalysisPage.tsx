@@ -34,11 +34,15 @@ export default function HazardAnalysisPage() {
 
   const radarData = useMemo(() => {
     if (!selectedHab) return [];
+    const floodVal = selectedHab.hazard_type === 'flood'
+      ? Math.round(selectedHab.hazard_severity * (selectedHab.hazard_severity <= 1 ? 100 : 1))
+      : 10;
+    const rainfall = selectedHab.rainfall_annual_mm ?? selectedHab.annual_rainfall_mm ?? 800;
     return [
-      { subject: 'Flood', A: selectedHab.hazard_type === 'flood' ? selectedHab.hazard_severity : 10, fullMark: 100 },
+      { subject: 'Flood', A: floodVal, fullMark: 100 },
       { subject: 'Landslide', A: Math.min(100, (selectedHab.slope_degrees / 40) * 100), fullMark: 100 },
       { subject: 'Cyclone', A: selectedHab.is_coastal ? 80 : 0, fullMark: 100 },
-      { subject: 'Drought', A: Math.max(0, 100 - (selectedHab.annual_rainfall_mm / 30)), fullMark: 100 },
+      { subject: 'Drought', A: Math.max(0, 100 - (rainfall / 30)), fullMark: 100 },
       { subject: 'Infrastructure', A: Math.max(0, (5 - selectedHab.housing_quality_index) / 4 * 100), fullMark: 100 },
       { subject: 'Accessibility', A: Math.min(100, (selectedHab.evacuation_route_quality / 5) * 100), fullMark: 100 },
     ];

@@ -215,6 +215,30 @@ export default function SimulationPage() {
                         <Delta before={result.before.pop} after={result.after.pop} />
                       </td>
                     </tr>
+                    <tr>
+                      <td className="p-3 font-medium">Shelter Capacity</td>
+                      <td className="p-3 text-center">{h.shelter_capacity_persons} p</td>
+                      <td className="p-3 text-center font-bold">{Math.round(h.shelter_capacity_persons * (1 + params.shelterCap / 100))} p</td>
+                      <td className="p-3 text-center">
+                        <Delta before={h.shelter_capacity_persons} after={Math.round(h.shelter_capacity_persons * (1 + params.shelterCap / 100))} unit=" p" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 font-medium">Healthcare Beds</td>
+                      <td className="p-3 text-center">{h.healthcare_beds} beds</td>
+                      <td className="p-3 text-center font-bold">{Math.round(h.healthcare_beds * (1 + params.healthCap / 100))} beds</td>
+                      <td className="p-3 text-center">
+                        <Delta before={h.healthcare_beds} after={Math.round(h.healthcare_beds * (1 + params.healthCap / 100))} unit=" beds" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-3 font-medium">Water Demand</td>
+                      <td className="p-3 text-center">{(result.before.pop * 50).toLocaleString()} L/d</td>
+                      <td className="p-3 text-center font-bold">{(result.after.pop * 50).toLocaleString()} L/d</td>
+                      <td className="p-3 text-center">
+                        <Delta before={result.before.pop * 50} after={result.after.pop * 50} unit=" L/d" />
+                      </td>
+                    </tr>
                   </tbody>
                 </table>
               </div>

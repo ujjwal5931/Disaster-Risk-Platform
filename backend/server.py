@@ -20,7 +20,7 @@ from app.services.risk_engine import calculate_risk
 from app.services.capacity_engine import calculate_capacity
 from app.services.relocation_engine import calculate_relocation_priority, rank_safe_zones
 from app.services.simulation_engine import run_simulation
-from app.database import execute_query, execute_one, execute_write
+from app.database import execute_query, execute_one, execute_write, execute_many
 from app.core.auth import verify_password, create_mock_token, decode_mock_token
 import datetime, math, hashlib
 

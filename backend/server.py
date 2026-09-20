@@ -65,7 +65,7 @@ class DRIPSHandler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", len(body))
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
         self.wfile.write(body)
@@ -73,7 +73,7 @@ class DRIPSHandler(http.server.BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.end_headers()
 
@@ -132,6 +132,7 @@ class DRIPSHandler(http.server.BaseHTTPRequestHandler):
             (r"^/api/simulate$", self.handle_simulate),
             (r"^/api/relocation/recommend$", self.handle_relocation_recommend),
             (r"^/api/reports$", self.handle_reports),
+            (r"^/api/habitations/replace-all$", self.handle_replace_all_habitations),
             (r"^/api/upload-data$", self.handle_upload),
         ]
 
@@ -530,6 +531,77 @@ class DRIPSHandler(http.server.BaseHTTPRequestHandler):
                 "methodology": "Weighted rule-based risk model. Demonstration data only.",
                 "disclaimer": DISCLAIMER,
             }))
+
+    def handle_replace_all_habitations(self, body):
+        # body should be a list of habitation dicts
+        if not isinstance(body, list):
+            if isinstance(body, dict) and isinstance(body.get('habitations'), list):
+                body = body['habitations']
+            else:
+                self.send_json(err("Expected a JSON array of habitations")[0], 400)
+                return
+        if len(body) == 0:
+            self.send_json(err("Empty array — nothing to insert")[0], 400)
+            return
+        try:
+            execute_write("DELETE FROM habitations")
+            params_list = []
+            for h in body:
+                params_list.append((
+                    str(h.get('name', 'Unknown'))[:200],
+                    str(h.get('district', 'Unknown'))[:200],
+                    str(h.get('state', 'Unknown'))[:200],
+                    float(h.get('latitude', 20.0)),
+                    float(h.get('longitude', 78.0)),
+                    float(h.get('elevation', 100.0)),
+                    int(h.get('population', 0)),
+                    int(h.get('children_count', 0)),
+                    int(h.get('elderly_count', 0)),
+                    int(h.get('disabled_count', 0)),
+                    int(h.get('pregnant_women_count', 0)),
+                    int(h.get('below_poverty_count', 0)),
+                    int(h.get('housing_quality', 3)),
+                    int(h.get('road_accessibility', 3)),
+                    str(h.get('hazard_type', 'flood'))[:50],
+                    float(h.get('hazard_severity', 0.5)),
+                    float(h.get('distance_from_hazard_km', 5.0)),
+                    int(h.get('historical_event_count', 0)),
+                    int(h.get('last_event_year', 2020)),
+                    float(h.get('water_capacity_liters_per_day', 0)),
+                    int(h.get('shelter_capacity_persons', 0)),
+                    int(h.get('healthcare_beds', 0)),
+                    int(h.get('evacuation_route_quality', 3)),
+                    float(h.get('food_stock_days', 7.0)),
+                    float(h.get('sanitation_coverage_pct', 60.0)),
+                    float(h.get('safe_land_area_sqkm', 1.0)),
+                    int(h.get('nearby_hospital_count', 0)),
+                    int(h.get('nearby_school_count', 0)),
+                    int(h.get('nearby_shelter_count', 0)),
+                    float(h.get('rainfall_annual_mm', 800.0)),
+                    float(h.get('slope_degrees', 2.0)),
+                    str(h.get('soil_type', 'Alluvial'))[:100],
+                ))
+            execute_many(
+                """INSERT INTO habitations (
+                    name, district, state, latitude, longitude, elevation, population,
+                    children_count, elderly_count, disabled_count, pregnant_women_count,
+                    below_poverty_count, housing_quality, road_accessibility,
+                    hazard_type, hazard_severity, distance_from_hazard_km,
+                    historical_event_count, last_event_year,
+                    water_capacity_liters_per_day, shelter_capacity_persons,
+                    healthcare_beds, evacuation_route_quality, food_stock_days,
+                    sanitation_coverage_pct, safe_land_area_sqkm,
+                    nearby_hospital_count, nearby_school_count, nearby_shelter_count,
+                    rainfall_annual_mm, slope_degrees, soil_type
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                params_list
+            )
+            self.send_json(ok({
+                "inserted": len(params_list),
+                "message": f"Successfully replaced all habitations with {len(params_list)} new records."
+            }, "Replace complete"))
+        except Exception as e:
+            self.send_json(err(f"Database error: {str(e)}")[0], 500)
 
     def handle_upload(self, body):
         # For multipart we read raw content-type

@@ -1,0 +1,21 @@
+# Railway Deployment Config
+# ───────────────────────────────────────────────────────────────
+# This file configures Railway.app for backend deployment.
+# Frontend is deployed separately to Vercel.
+#
+# Steps:
+# 1. Push to GitHub
+# 2. Import repo at railway.app → select "Dockerfile.backend"
+# 3. Set PORT=8000 in Railway environment variables
+# 4. Note the public URL Railway gives you
+# 5. Update VITE_API_URL in Vercel env vars to that URL
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.backend"
+
+[deploy]
+startCommand = "python3 backend/server.py"
+healthcheckPath = "/api/dashboard"
+healthcheckTimeout = 30
+restartPolicyType = "on-failure"

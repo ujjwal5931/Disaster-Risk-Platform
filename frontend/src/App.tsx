@@ -17,6 +17,8 @@ import DataUploadPage from './pages/DataUploadPage';
 import HistoricalAnalysisPage from './pages/HistoricalAnalysisPage';
 import SettingsPage from './pages/SettingsPage';
 import HabitationDetailPage from './pages/HabitationDetailPage';
+import AboutPage from './pages/AboutPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useStore((s) => s.user);
@@ -44,9 +46,10 @@ export default function App() {
           <Route path="/upload" element={<DataUploadPage />} />
           <Route path="/history" element={<HistoricalAnalysisPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/habitation/:id" element={<HabitationDetailPage />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Shield, Map, AlertTriangle, Activity, Navigation, Zap, Users, Sliders, Bell, FileText, Upload, Clock, Settings, BarChart2, LogOut } from 'lucide-react';
+import { Shield, Map, AlertTriangle, Activity, Navigation, Zap, Users, Sliders, Bell, FileText, Upload, Clock, Settings, BarChart2, LogOut, Info } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 
 const NAV = [
@@ -16,7 +16,9 @@ const NAV = [
   { to: '/upload', label: 'Data Upload', icon: Upload },
   { to: '/history', label: 'Historical', icon: Clock },
   { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/about', label: 'About / SIH', icon: Info },
 ];
+
 
 export default function AppLayout() {
   const { user, logout, isDemoMode, toggleDemoMode } = useStore();

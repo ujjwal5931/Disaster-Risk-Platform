@@ -3,9 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DRIPS Platform</title>
+
+    <!-- Primary Meta -->
+    <title>DRIPS — Disaster Risk Intelligence Platform | SIH 2026</title>
+    <meta name="description" content="Intelligent identification of hazard-based red zones, carrying capacity assessment, and immediate relocation needs for vulnerable habitations. Smart India Hackathon 2026 — SIH26191." />
+    <meta name="keywords" content="disaster management, GIS, risk assessment, habitation, relocation, flood, landslide, cyclone, NDMA, SIH 2026" />
+    <meta name="author" content="Team DRIPS — Smart India Hackathon 2026" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="DRIPS — Disaster Risk Intelligence Platform" />
+    <meta property="og:description" content="GIS-based disaster risk assessment and decision support system for vulnerable habitations." />
+
+    <!-- Favicon (inline SVG shield) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>" />
+
+    <!-- Preconnect for map tiles -->
+    <link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin />
+    <link rel="preconnect" href="https://a.tile.openstreetmap.org" />
+
+    <!-- Leaflet CSS (loaded here so map never flashes unstyled) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
   </head>
   <body>
+    <noscript>
+      <div style="font-family:sans-serif;text-align:center;padding:40px;">
+        <h2>JavaScript Required</h2>
+        <p>DRIPS Platform requires JavaScript to run. Please enable JavaScript in your browser.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
